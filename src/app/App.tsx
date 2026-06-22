@@ -501,10 +501,21 @@ function ForgotPasswordPage({ onBack }: { onBack: () => void }) {
   function submit() { if (!email.trim()) { setError("Please enter your email or phone"); return; } setSent(true); }
   if (sent) return (
     <div className="flex flex-col items-center justify-center min-h-screen px-8 text-center">
-      <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mb-6"><Check size={36} className="text-primary" /></div>
-      <h1 className="text-2xl font-bold text-foreground mb-2">Check your inbox</h1>
-      <p className="text-muted-foreground mb-6">We sent a password reset link to<br /><span className="font-semibold text-foreground">{email}</span></p>
-      <button onClick={onBack} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity">Back to Sign In</button>
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mb-6"
+      >
+        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 300 }}>
+          <Check size={36} className="text-primary" />
+        </motion.div>
+      </motion.div>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.5 }}>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Check your inbox</h1>
+        <p className="text-muted-foreground mb-6">We sent a password reset link to<br /><span className="font-semibold text-foreground">{email}</span></p>
+        <button onClick={onBack} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity">Back to Sign In</button>
+      </motion.div>
     </div>
   );
   return (
@@ -1456,7 +1467,7 @@ function FavoritesPage({ favorites, onProvider, onToggleFavorite }: { favorites:
 function BottomNav({ activeTab, onTab }: { activeTab: "home"|"bookings"|"calendar"|"profile"; onTab: (tab: "home"|"bookings"|"calendar"|"profile") => void }) {
   const tabs = [{ key:"home" as const, label:"Home", icon:Home }, { key:"bookings" as const, label:"Bookings", icon:BookOpen }, { key:"calendar" as const, label:"Calendar", icon:CalendarDays }, { key:"profile" as const, label:"Profile", icon:User }];
   return(
-    <div className="bg-card border-t border-border px-2 pb-8 pt-2 flex items-center justify-around">
+    <div className="bg-card/95 backdrop-blur-md border-t border-border px-2 pb-8 pt-2 flex items-center justify-around shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
       {tabs.map(({ key, label, icon: Icon }) => { const active = activeTab === key; return<button key={key} onClick={()=>onTab(key)} className="flex flex-col items-center gap-0.5 min-w-[60px] py-1 group"><div className={`p-2 rounded-xl transition-all ${active?"bg-primary/10":"group-hover:bg-muted"}`}><Icon size={20} className={active?"text-primary":"text-muted-foreground"} strokeWidth={active?2.5:1.8}/></div><span className={`text-[10px] font-bold ${active?"text-primary":"text-muted-foreground"}`}>{label}</span>{active&&<div className="w-1 h-1 rounded-full bg-accent"/>}</button>; })}
     </div>
   );
