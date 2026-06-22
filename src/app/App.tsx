@@ -61,7 +61,7 @@ interface ServiceItem {
 // ── Data ──────────────────────────────────────────────────────────────────────
 const MOCK_ACCOUNTS: Account[] = [
   { id: "1", name: "Reem Al-Rashidi", email: "reem@gmail.com", phone: "+965 9111 2233", type: "personal", avatar: "RA", active: true },
-  { id: "2", name: "Burak Barbershop", email: "info@burakbarbershop.kw", phone: "+965 9876 5432", type: "business", avatar: "BB", active: false },
+  { id: "2", name: "Burak Barbershop", email: "burak@gmail.com", phone: "+965 9876 5432", type: "business", avatar: "BB", active: false },
 ];
 
 const ALL_PROVIDERS: Provider[] = [
@@ -205,6 +205,7 @@ export default function App() {
   const [bookingRequests, setBookingRequests] = useState<BookingRequest[]>([]);
   const [userReviews, setUserReviews] = useState<UserReview[]>([]);
   const [revenueDetailDay, setRevenueDetailDay] = useState<string>("Fri");
+  const [services, setServices] = useState<ServiceItem[]>(INIT_SERVICES);
 
   const isAuthenticated = view !== "splash" && view !== "login" && view !== "signup" && view !== "forgot-password";
   const activeAccount = accounts.find((a) => a.active) ?? accounts[0];
@@ -275,8 +276,8 @@ export default function App() {
 
         <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }} className="flex-1 overflow-y-auto pb-24" style={{ scrollbarWidth: "none" }} onClick={() => showNotifPopup && setShowNotifPopup(false)}>
           {view === "splash" && <SplashScreen onStart={() => navigate("login")} />}
-          {view === "login" && <LoginScreen email={loginEmail} setEmail={setLoginEmail} password={loginPassword} setPassword={setLoginPassword} accountType={accountType} setAccountType={setAccountType} onLogin={() => navigate(accountType === "personal" ? "client-home" : "provider-dashboard")} onSignup={() => navigate("signup")} onForgot={() => navigate("forgot-password")} />}
-          {view === "signup" && <SignupScreen signupType={signupType} setSignupType={setSignupType} onComplete={() => navigate(accountType === "personal" ? "client-home" : "provider-dashboard")} onBack={goBack} />}
+          {view === "login" && <LoginScreen email={loginEmail} setEmail={setLoginEmail} password={loginPassword} setPassword={setLoginPassword} accountType={accountType} setAccountType={setAccountType} onLogin={(type) => { setAccountType(type); setAccounts((prev) => prev.map((a) => ({ ...a, active: a.type === type && (type === "personal" ? a.email === "reem@gmail.com" : a.email === "burak@gmail.com") }))); navigate(type === "personal" ? "client-home" : "provider-dashboard"); }} onSignup={() => navigate("signup")} onForgot={() => navigate("forgot-password")} accounts={accounts} />}
+          {view === "signup" && <SignupScreen signupType={signupType} setSignupType={setSignupType} onComplete={(name, email, phone, type) => { const newAcc: Account = { id: `acc-${Date.now()}`, name, email, phone, type, avatar: name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(), active: true }; setAccounts((prev) => [...prev.map((a) => ({ ...a, active: false })), newAcc]); setAccountType(type); navigate(type === "personal" ? "client-home" : "provider-dashboard"); }} onBack={goBack} />}
           {view === "forgot-password" && <ForgotPasswordPage onBack={goBack} />}
           {view === "client-home" && <ClientHome gender={gender} setGender={setGender} onCategory={(cat) => { setSelectedCategory(cat); navigate("category-results"); }} onSearch={() => navigate("search-results")} onProvider={openProvider} onOfferBook={openOfferBooking} accountName={activeAccount.name} />}
           {view === "search-results" && <SearchResults onProvider={openProvider} favorites={favorites} />}
@@ -287,7 +288,7 @@ export default function App() {
           {view === "business-bookings" && <BusinessBookings bookingRequests={bookingRequests} onAccept={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "confirmed" } : r))} onReject={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "rejected" } : r))} />}
           {view === "provider-dashboard" && <ProviderDashboard accountName={activeAccount.name} onCalendar={() => navigate("provider-calendar")} onRevenueDay={(day) => { setRevenueDetailDay(day); navigate("revenue-detail"); }} />}
           {view === "provider-calendar" && <ProviderCalendar accountType={accountType} bookingRequests={bookingRequests} onProvider={openProvider} />}
-          {view === "service-setup" && <ServiceSetup />}
+          {view === "service-setup" && <ServiceSetup services={services} setServices={setServices} />}
           {view === "business-profile" && <BusinessProfileEditor />}
           {view === "settings" && <SettingsScreen accounts={accounts} activeAccount={activeAccount} accountType={accountType} onSwitchAccount={switchAccount} onAddAccount={() => navigate("login")} onEditAccount={() => navigate("edit-account")} onServiceSetup={() => navigate("service-setup")} onBusinessProfile={() => navigate("business-profile")} onPrivacy={() => navigate("privacy")} onAboutUs={() => navigate("about-us")} onGiftCards={() => navigate("gift-cards")} onInviteFriends={() => navigate("invite-friends")} onFavorites={() => navigate("favorites")} onRevenue={() => navigate("revenue-detail")} onLogout={() => { setView("splash"); setHistory([]); }} />}
           {view === "edit-account" && <EditAccount account={activeAccount} onSave={(u) => { setAccounts((prev) => prev.map((a) => a.id === u.id ? u : a)); goBack(); }} />}
@@ -348,34 +349,29 @@ function SplashScreen({ onStart }: { onStart: () => void }) {
 
       {/* Center content */}
       <div className="flex flex-col items-center gap-6 relative z-10 px-8">
-        {/* Wordmark */}
-        <motion.div
-          className="flex flex-col items-center gap-2"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <h1
-            style={{
-              fontFamily: '"tgl30sansserifthinMed", "Josefin Sans", sans-serif',
-              fontWeight: 500,
-              fontSize: "4.2rem",
-              letterSpacing: "0.1em",
-              lineHeight: 1,
-              color: "#F3EDF8",
-            }}
-          >
-            Ehjezly
-          </h1>
+        {/* Wordmark — letters animate in one by one */}
+        <div className="flex flex-col items-center gap-2">
+          <div style={{ display: "flex", fontFamily: '"tgl30sansserifthinMed", "Josefin Sans", sans-serif', fontWeight: 500, fontSize: "4.2rem", letterSpacing: "0.1em", lineHeight: 1, color: "#F3EDF8" }}>
+            {"Ehjezly".split("").map((char, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
+                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                transition={{ delay: 0.1 + i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              >
+                {char}
+              </motion.span>
+            ))}
+          </div>
           {/* Animated underline */}
           <motion.div
             className="h-px origin-center"
             style={{ width: "6rem", background: "linear-gradient(90deg, transparent, #F8CD42, transparent)" }}
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}
-            transition={{ delay: 0.65, duration: 0.7, ease: "easeOut" }}
+            transition={{ delay: 0.85, duration: 0.7, ease: "easeOut" }}
           />
-        </motion.div>
+        </div>
 
         {/* Tagline */}
         <motion.p
@@ -428,14 +424,23 @@ function SplashScreen({ onStart }: { onStart: () => void }) {
 }
 
 // ── Login (with validation + email keyboard) ──────────────────────────────────
-function LoginScreen({ email, setEmail, password, setPassword, accountType, setAccountType, onLogin, onSignup, onForgot }: { email: string; setEmail: (v: string) => void; password: string; setPassword: (v: string) => void; accountType: AccountType; setAccountType: (v: AccountType) => void; onLogin: () => void; onSignup: () => void; onForgot: () => void }) {
+function LoginScreen({ email, setEmail, password, setPassword, accountType, setAccountType, onLogin, onSignup, onForgot, accounts }: { email: string; setEmail: (v: string) => void; password: string; setPassword: (v: string) => void; accountType: AccountType; setAccountType: (v: AccountType) => void; onLogin: (type: AccountType) => void; onSignup: () => void; onForgot: () => void; accounts: Account[] }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   function submit() {
     const e: Record<string, string> = {};
     if (!email.trim()) e.email = "This field is required";
     if (!password) e.password = "This field is required";
+    if (!Object.keys(e).length) {
+      // Validate against known accounts
+      const matched = accounts.find((a) => a.email.toLowerCase() === email.trim().toLowerCase());
+      if (!matched || password !== "1234") {
+        e.password = "Incorrect email or password";
+      } else {
+        onLogin(matched.type);
+        return;
+      }
+    }
     setErrors(e);
-    if (!Object.keys(e).length) onLogin();
   }
   return (
     <div className="flex flex-col min-h-screen px-6 pt-16 pb-8">
@@ -464,7 +469,7 @@ function LoginScreen({ email, setEmail, password, setPassword, accountType, setA
 }
 
 // ── Signup (with validation) ──────────────────────────────────────────────────
-function SignupScreen({ signupType, setSignupType, onComplete, onBack }: { signupType: AccountType; setSignupType: (v: AccountType) => void; onComplete: () => void; onBack: () => void }) {
+function SignupScreen({ signupType, setSignupType, onComplete, onBack }: { signupType: AccountType; setSignupType: (v: AccountType) => void; onComplete: (name: string, email: string, phone: string, type: AccountType) => void; onBack: () => void }) {
   const [vals, setVals] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const personalFields = [{ key: "name", label: "Full Name", placeholder: "Reem Al-Rashidi", type: "text" }, { key: "email", label: "Email", placeholder: "reem@gmail.com", type: "text", inputMode: "email" as React.HTMLAttributes<HTMLInputElement>["inputMode"] }, { key: "phone", label: "Phone", placeholder: "+965 9XXX XXXX", type: "tel" }, { key: "password", label: "Password", placeholder: "••••••••", type: "password" }];
@@ -474,7 +479,10 @@ function SignupScreen({ signupType, setSignupType, onComplete, onBack }: { signu
     const e: Record<string, string> = {};
     fields.forEach((f) => { if (!vals[f.key]?.trim()) e[f.key] = "Required"; });
     setErrors(e);
-    if (!Object.keys(e).length) onComplete();
+    if (!Object.keys(e).length) {
+      const name = signupType === "personal" ? vals.name : vals.bname;
+      onComplete(name, vals.email, vals.phone, signupType);
+    }
   }
   return (
     <div className="flex flex-col min-h-screen px-6 pt-10 pb-8">
@@ -1211,11 +1219,12 @@ function AddBreakSheet({ onAdd, onClose }: { onAdd: (b: CalendarAppt) => void; o
 }
 
 // ── Service Setup (groups + edit dialog) ──────────────────────────────────────
-function ServiceSetup() {
-  const [services, setServices] = useState<ServiceItem[]>(INIT_SERVICES);
+function ServiceSetup({ services, setServices }: { services: ServiceItem[]; setServices: React.Dispatch<React.SetStateAction<ServiceItem[]>> }) {
   const [editTarget, setEditTarget] = useState<ServiceItem | null>(null);
+  const [showAddSheet, setShowAddSheet] = useState(false);
   const groups = Array.from(new Set(services.map((s) => s.group)));
   function saveEdit(updated: ServiceItem) { setServices((prev) => prev.map((s) => s.id === updated.id ? updated : s)); setEditTarget(null); }
+  function addService(newService: ServiceItem) { setServices((prev) => [...prev, newService]); setShowAddSheet(false); }
   return (
     <div className="flex flex-col px-5 pt-2 pb-4 gap-5">
       <div><h1 className="text-2xl font-bold text-foreground">Services</h1><p className="text-sm text-muted-foreground mt-0.5">Manage your service catalog</p></div>
@@ -1233,8 +1242,48 @@ function ServiceSetup() {
           </div>
         </div>
       ))}
-      <button className="flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-border text-muted-foreground text-sm hover:border-primary/40 hover:text-primary transition-colors"><Plus size={16} />Add new service</button>
+      <button onClick={() => setShowAddSheet(true)} className="flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-border text-muted-foreground text-sm hover:border-primary/40 hover:text-primary transition-colors"><Plus size={16} />Add new service</button>
       {editTarget && <ServiceEditSheet service={editTarget} groups={groups} onSave={saveEdit} onClose={() => setEditTarget(null)} />}
+      {showAddSheet && <AddServiceSheet groups={groups} onAdd={addService} onClose={() => setShowAddSheet(false)} />}
+    </div>
+  );
+}
+
+function AddServiceSheet({ groups, onAdd, onClose }: { groups: string[]; onAdd: (s: ServiceItem) => void; onClose: () => void }) {
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [duration, setDuration] = useState("30 min");
+  const [description, setDescription] = useState("");
+  const [group, setGroup] = useState(groups[0] ?? "General");
+  const [newGroup, setNewGroup] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  function submit() {
+    const e: Record<string, string> = {};
+    if (!name.trim()) e.name = "Required";
+    if (!price.trim()) e.price = "Required";
+    setErrors(e);
+    if (!Object.keys(e).length) {
+      onAdd({ id: `svc-${Date.now()}`, name, price, duration, description, group: newGroup.trim() || group, active: true });
+    }
+  }
+  return (
+    <div className="absolute inset-0 z-50 flex flex-col justify-end">
+      <div className="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-card rounded-t-3xl border-t border-border px-5 pt-5 pb-10 z-10 shadow-2xl">
+        <div className="flex items-center justify-between mb-5"><h2 className="text-lg font-bold text-foreground">Add Service</h2><button onClick={onClose} className="p-1.5 rounded-full bg-muted text-muted-foreground"><X size={16} /></button></div>
+        <div className="flex flex-col gap-4 mb-5">
+          {[{ label: "Service Name", val: name, set: setName, err: errors.name }, { label: "Price (KWD)", val: price, set: setPrice, err: errors.price }, { label: "Duration", val: duration, set: setDuration }].map(({ label, val, set, err }) => (
+            <div key={label}><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{label}</label><input value={val} onChange={(e) => set(e.target.value)} className={`w-full px-4 py-3 rounded-xl bg-muted border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm ${err ? "border-destructive" : "border-border"}`} />{err && <p className="text-xs text-destructive mt-1">{err}</p>}</div>
+          ))}
+          <div><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Description</label><textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm resize-none" /></div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Group</label>
+            <div className="flex gap-2 flex-wrap mb-2">{groups.map((g) => <button key={g} onClick={() => { setGroup(g); setNewGroup(""); }} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${group === g && !newGroup ? "bg-primary text-primary-foreground border-primary" : "bg-muted border-border text-foreground"}`}>{g}</button>)}</div>
+            <input value={newGroup} onChange={(e) => setNewGroup(e.target.value)} placeholder="Or create new group…" className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm" />
+          </div>
+        </div>
+        <button onClick={submit} className="w-full py-3.5 rounded-2xl bg-accent text-accent-foreground font-bold text-sm hover:opacity-90">Add Service</button>
+      </div>
     </div>
   );
 }
