@@ -247,8 +247,8 @@ export default function App() {
   function addReview(review: UserReview) { setUserReviews((prev) => [...prev, review]); }
 
   return (
-    <div className="min-h-screen bg-foreground/5 flex items-center justify-center" style={{ fontFamily: "Inter, sans-serif" }}>
-      <div className="relative bg-background w-full max-w-[430px] min-h-screen flex flex-col overflow-hidden shadow-2xl">
+    <div className="h-screen bg-foreground/5 flex items-center justify-center overflow-hidden" style={{ fontFamily: "Inter, sans-serif" }}>
+      <div className="relative bg-background w-full max-w-[430px] h-screen flex flex-col overflow-hidden shadow-2xl">
         {/* Top bar */}
         {isAuthenticated && (
           <div className="flex items-center justify-between px-5 pt-10 pb-2 flex-shrink-0">
@@ -431,10 +431,11 @@ function LoginScreen({ email, setEmail, password, setPassword, accountType, setA
     if (!email.trim()) e.email = "This field is required";
     if (!password) e.password = "This field is required";
     if (!Object.keys(e).length) {
-      // Validate against known accounts
       const matched = accounts.find((a) => a.email.toLowerCase() === email.trim().toLowerCase());
       if (!matched || password !== "1234") {
         e.password = "Incorrect email or password";
+      } else if (matched.type !== accountType) {
+        e.password = `This account is a ${matched.type} account. Please select the ${matched.type} tab.`;
       } else {
         onLogin(matched.type);
         return;
