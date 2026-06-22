@@ -1,1 +1,1 @@
-{"installCommand": "pnpm install --no-frozen-lockfile"}
+{"installCommand": "npm install --legacy-peer-deps", "buildCommand": "npm run build"}
