@@ -96,9 +96,12 @@ const SPECIAL_OFFERS = [
 ];
 
 const NOTIFICATIONS = [
-  { id: "n1", title: "Special offer from Al-Salam Beauty", body: "20% off your next appointment this week!", time: "2h ago", dot: "bg-accent", targetView: "provider-profile" as View, targetProviderId: "wbs1" },
-  { id: "n2", title: "Noura Spa replied to your review", body: "Thank you! We look forward to seeing you again.", time: "1d ago", dot: "bg-primary", targetView: "provider-profile" as View, targetProviderId: "ws1" },
-  { id: "n3", title: "Appointment reminder", body: "Farah Brow Studio tomorrow at 2:00 PM", time: "1d ago", dot: "bg-primary/60", targetView: "my-appointments" as View, targetProviderId: null },
+  { id: "n1", title: "Special offer from Al-Salam Beauty", body: "20% off your next appointment this week!", time: "2h ago", dot: "bg-accent", targetView: "provider-profile" as View, targetProviderId: "wbs1", forPersonal: true },
+  { id: "n2", title: "Noura Spa replied to your review", body: "Thank you! We look forward to seeing you again.", time: "1d ago", dot: "bg-primary", targetView: "provider-profile" as View, targetProviderId: "ws1", forPersonal: true },
+  { id: "n3", title: "Appointment reminder", body: "Farah Brow Studio tomorrow at 2:00 PM", time: "1d ago", dot: "bg-primary/60", targetView: "my-appointments" as View, targetProviderId: null, forPersonal: true },
+  { id: "n4", title: "New booking request", body: "Noura Al-Hamad requested Nail Gel Set on Fri 20 Jun at 10:00 AM", time: "30m ago", dot: "bg-accent", targetView: "business-bookings" as View, targetProviderId: null, forPersonal: false },
+  { id: "n5", title: "Booking confirmed", body: "Reem Al-Rashidi confirmed her Blow Dry & Style appointment", time: "2h ago", dot: "bg-primary", targetView: "business-bookings" as View, targetProviderId: null, forPersonal: false },
+  { id: "n6", title: "New review received", body: "A client left you a 5-star review. Keep up the great work!", time: "1d ago", dot: "bg-primary/60", targetView: "provider-dashboard" as View, targetProviderId: null, forPersonal: false },
 ];
 
 const NOW = new Date();
@@ -257,7 +260,7 @@ export default function App() {
                 {showNotifPopup && (
                   <div className="absolute right-0 top-11 z-50 w-72 bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
                     <div className="px-4 py-3 border-b border-border flex items-center justify-between"><span className="text-sm font-bold text-foreground">Notifications</span><button onClick={() => setShowNotifPopup(false)} className="text-muted-foreground"><X size={14} /></button></div>
-                    {NOTIFICATIONS.map((n) => (
+                    {NOTIFICATIONS.filter((n) => accountType === "personal" ? n.forPersonal : !n.forPersonal).map((n) => (
                       <button key={n.id} onClick={() => handleNotifClick(n)} className="w-full flex items-start gap-3 px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border last:border-0 text-left">
                         <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${n.dot}`} />
                         <div className="flex-1 min-w-0"><p className="text-xs font-semibold text-foreground leading-tight">{n.title}</p><p className="text-xs text-muted-foreground mt-0.5 leading-tight">{n.body}</p><p className="text-[10px] text-muted-foreground mt-1">{n.time}</p></div>
@@ -286,7 +289,7 @@ export default function App() {
           {view === "provider-calendar" && <ProviderCalendar accountType={accountType} bookingRequests={bookingRequests} onProvider={openProvider} />}
           {view === "service-setup" && <ServiceSetup />}
           {view === "business-profile" && <BusinessProfileEditor />}
-          {view === "settings" && <SettingsScreen accounts={accounts} activeAccount={activeAccount} accountType={accountType} onSwitchAccount={switchAccount} onAddAccount={() => navigate("signup")} onEditAccount={() => navigate("edit-account")} onServiceSetup={() => navigate("service-setup")} onBusinessProfile={() => navigate("business-profile")} onPrivacy={() => navigate("privacy")} onAboutUs={() => navigate("about-us")} onGiftCards={() => navigate("gift-cards")} onInviteFriends={() => navigate("invite-friends")} onFavorites={() => navigate("favorites")} onRevenue={() => navigate("revenue-detail")} onLogout={() => { setView("splash"); setHistory([]); }} />}
+          {view === "settings" && <SettingsScreen accounts={accounts} activeAccount={activeAccount} accountType={accountType} onSwitchAccount={switchAccount} onAddAccount={() => navigate("login")} onEditAccount={() => navigate("edit-account")} onServiceSetup={() => navigate("service-setup")} onBusinessProfile={() => navigate("business-profile")} onPrivacy={() => navigate("privacy")} onAboutUs={() => navigate("about-us")} onGiftCards={() => navigate("gift-cards")} onInviteFriends={() => navigate("invite-friends")} onFavorites={() => navigate("favorites")} onRevenue={() => navigate("revenue-detail")} onLogout={() => { setView("splash"); setHistory([]); }} />}
           {view === "edit-account" && <EditAccount account={activeAccount} onSave={(u) => { setAccounts((prev) => prev.map((a) => a.id === u.id ? u : a)); goBack(); }} />}
           {view === "privacy" && <PrivacyPage />}
           {view === "about-us" && <AboutUsPage />}
@@ -864,11 +867,19 @@ function MyAppointments({ bookingRequests, onSearch, onProvider, onCancelRequest
 // ── Business Bookings (accept/reject) ─────────────────────────────────────────
 function BusinessBookings({ bookingRequests, onAccept, onReject }: { bookingRequests: BookingRequest[]; onAccept: (id: string) => void; onReject: (id: string) => void }) {
   const [tab, setTab] = useState<"pending" | "confirmed" | "all">("pending");
-  const staticBookings = [
-    { id: "s1", client: "Reem Al-Rashidi", service: "Blow Dry & Style", date: "Thu, 19 Jun 2026", time: "11:00 AM", status: "confirmed" as const },
-    { id: "s2", client: "Sara Al-Mutairi", service: "Full Highlights", date: "Thu, 19 Jun 2026", time: "2:00 PM", status: "confirmed" as const },
-    { id: "s3", client: "Noura Al-Hamad", service: "Nail Gel Set", date: "Fri, 20 Jun 2026", time: "10:00 AM", status: "pending" as const },
-  ];
+  const [staticBookings, setStaticBookings] = useState([
+    { id: "s1", client: "Reem Al-Rashidi", service: "Blow Dry & Style", date: "Thu, 19 Jun 2026", time: "11:00 AM", status: "confirmed" as "pending" | "confirmed" | "cancelled" | "rejected" },
+    { id: "s2", client: "Sara Al-Mutairi", service: "Full Highlights", date: "Thu, 19 Jun 2026", time: "2:00 PM", status: "confirmed" as "pending" | "confirmed" | "cancelled" | "rejected" },
+    { id: "s3", client: "Noura Al-Hamad", service: "Nail Gel Set", date: "Fri, 20 Jun 2026", time: "10:00 AM", status: "pending" as "pending" | "confirmed" | "cancelled" | "rejected" },
+  ]);
+  function handleAccept(id: string) {
+    if (staticBookings.find((b) => b.id === id)) setStaticBookings((p) => p.map((b) => b.id === id ? { ...b, status: "confirmed" as const } : b));
+    else onAccept(id);
+  }
+  function handleReject(id: string) {
+    if (staticBookings.find((b) => b.id === id)) setStaticBookings((p) => p.map((b) => b.id === id ? { ...b, status: "rejected" as const } : b));
+    else onReject(id);
+  }
   const allBookings = [...bookingRequests.map((r) => ({ id: r.id, client: "Client", service: r.service, date: r.date, time: r.time, status: r.status as "pending" | "confirmed" | "cancelled" | "rejected" })), ...staticBookings];
   const displayedBookings = tab === "all" ? allBookings : allBookings.filter((b) => b.status === tab);
   const statusColor = (s: string) => s === "confirmed" ? "bg-primary/10 text-primary" : s === "pending" ? "bg-[#F8CD42]/20 text-amber-700" : "bg-muted text-muted-foreground";
@@ -883,8 +894,8 @@ function BusinessBookings({ bookingRequests, onAccept, onReject }: { bookingRequ
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3"><span className="flex items-center gap-1"><CalendarDays size={11} />{b.date}</span><span className="flex items-center gap-1"><Clock size={11} />{b.time}</span></div>
             {b.status === "pending" && (
               <div className="flex gap-2">
-                <button onClick={() => onAccept(b.id)} className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity">Accept</button>
-                <button onClick={() => onReject(b.id)} className="flex-1 py-2 rounded-xl border border-destructive text-destructive text-xs font-bold hover:bg-destructive/5 transition-colors">Reject</button>
+                <button onClick={() => handleAccept(b.id)} className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-opacity">Accept</button>
+                <button onClick={() => handleReject(b.id)} className="flex-1 py-2 rounded-xl border border-destructive text-destructive text-xs font-bold hover:bg-destructive/5 transition-colors">Reject</button>
               </div>
             )}
           </div>
@@ -953,12 +964,24 @@ function ProviderCalendar({ accountType, bookingRequests, onProvider }: { accoun
   const dayBreaks = breaks[selectedDay] ?? [];
 
   // For personal accounts, convert their bookingRequests into CalendarAppt format
+  // Filter by selectedDay (dateIdx is day of week: 0=Sun, 1=Mon, etc.)
+  function to24hr(timeStr: string): string {
+    const match = timeStr.match(/^(\d+):?(\d{0,2})\s*(AM|PM)$/i);
+    if (!match) return timeStr;
+    let [, h, m, period] = match;
+    let hour = parseInt(h);
+    const min = m || "00";
+    if (period.toUpperCase() === "PM" && hour !== 12) hour += 12;
+    if (period.toUpperCase() === "AM" && hour === 12) hour = 0;
+    return `${hour}:${min.padEnd(2, "0")}`;
+  }
+
   const personalAppts: CalendarAppt[] = accountType === "personal"
     ? bookingRequests
-        .filter((r) => (r.status === "pending" || r.status === "confirmed") && !cancelledIds.includes(r.id))
+        .filter((r) => (r.status === "pending" || r.status === "confirmed") && !cancelledIds.includes(r.id) && r.dateIdx === selectedDay)
         .map((r) => ({
           id: r.id,
-          time: r.time.replace(" AM", "").replace(" PM", (r.time.includes("PM") && !r.time.startsWith("12")) ? "" : ""),
+          time: to24hr(r.time),
           client: r.providerName,
           service: r.service,
           duration: "1 hr",
@@ -1084,7 +1107,9 @@ function ProviderCalendar({ accountType, bookingRequests, onProvider }: { accoun
       {/* Day selector strip */}
       <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
         {dayLabels.map((d, i) => {
-          const count = (SCHEDULE_BY_DAY[i] ?? []).length;
+          const count = accountType === "personal"
+            ? bookingRequests.filter((r) => (r.status === "pending" || r.status === "confirmed") && r.dateIdx === i).length
+            : (SCHEDULE_BY_DAY[i] ?? []).length;
           const off = accountType === "business" && offDays.includes(i);
           return (
             <button key={d} onClick={() => setSelectedDay(i)} className={`flex flex-col items-center min-w-[44px] py-2.5 rounded-xl border relative transition-all ${selectedDay === i ? "bg-primary text-primary-foreground border-primary" : off ? "bg-muted/50 border-border text-muted-foreground opacity-50" : "bg-card border-border text-foreground hover:border-primary/40"}`}>
@@ -1242,17 +1267,42 @@ function ServiceEditSheet({ service, groups, onSave, onClose }: { service: Servi
 
 // ── Business Profile Editor (Burak Barbershop) ────────────────────────────────
 function BusinessProfileEditor() {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [coverUrl, setCoverUrl] = useState("https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=430&h=150&fit=crop&auto=format");
+  const [fields, setFields] = useState({ name: "Burak Barbershop", category: "Barbershop", location: "Salmiya, Kuwait", phone: "+965 9876 5432", website: "burakbarbershop.kw", bio: "Kuwait's premier barbershop experience. Precision cuts, classic shaves, and modern grooming in a refined atmosphere." });
+  const [hours, setHours] = useState([{ day: "Sat – Thu", hours: "9:00 AM – 10:00 PM" }, { day: "Fri", hours: "2:00 PM – 10:00 PM" }]);
+  const [saved, setSaved] = useState(false);
+  function handleCover(e: React.ChangeEvent<HTMLInputElement>) { const f = e.target.files?.[0]; if (f) setCoverUrl(URL.createObjectURL(f)); }
+  function handleSave() { setSaved(true); setTimeout(() => setSaved(false), 2000); }
   return (
     <div className="flex flex-col px-5 pt-2 pb-4 gap-5">
       <div><h1 className="text-2xl font-bold text-foreground">Business Profile</h1><p className="text-sm text-muted-foreground mt-0.5">How clients see you</p></div>
-      <div className="relative h-36 bg-muted rounded-3xl overflow-hidden"><img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=430&h=150&fit=crop&auto=format" alt="Cover" className="w-full h-full object-cover" /><button className="absolute bottom-3 right-3 bg-card/90 text-foreground px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-border"><Edit3 size={12} />Edit cover</button></div>
+      <div className="relative h-36 bg-muted rounded-3xl overflow-hidden">
+        <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
+        <button onClick={() => fileRef.current?.click()} className="absolute bottom-3 right-3 bg-card/90 text-foreground px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-border hover:bg-card transition-colors"><Edit3 size={12} />Edit cover</button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleCover} />
+      </div>
       <div className="flex flex-col gap-4">
-        {[{ label:"Business Name", value:"Burak Barbershop" }, { label:"Category", value:"Barbershop" }, { label:"Location", value:"Salmiya, Kuwait" }, { label:"Phone", value:"+965 9876 5432" }, { label:"Website", value:"burakbarbershop.kw" }].map(({ label, value }) => (
-          <div key={label}><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{label}</label><input defaultValue={value} className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm" /></div>
+        {(["name", "category", "location", "phone", "website"] as const).map((key) => (
+          <div key={key}><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{key === "name" ? "Business Name" : key.charAt(0).toUpperCase() + key.slice(1)}</label><input value={fields[key]} onChange={(e) => setFields((p) => ({ ...p, [key]: e.target.value }))} className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm" /></div>
         ))}
-        <div><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Bio</label><textarea defaultValue="Kuwait's premier barbershop experience. Precision cuts, classic shaves, and modern grooming in a refined atmosphere." rows={3} className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm resize-none" /></div>
-        <div><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Working Hours</label><div className="flex flex-col gap-2">{[["Sat – Thu", "9:00 AM – 10:00 PM"], ["Fri", "2:00 PM – 10:00 PM"]].map(([day, hours]) => <div key={day} className="flex items-center justify-between bg-muted rounded-xl px-4 py-2.5"><span className="text-sm font-semibold text-foreground">{day}</span><span className="text-sm text-muted-foreground">{hours}</span></div>)}</div></div>
-        <button className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity">Save Changes</button>
+        <div><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Bio</label><textarea value={fields.bio} onChange={(e) => setFields((p) => ({ ...p, bio: e.target.value }))} rows={3} className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm resize-none" /></div>
+        <div>
+          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Working Hours</label>
+          <div className="flex flex-col gap-2">
+            {hours.map((h, i) => (
+              <div key={i} className="flex items-center gap-2 bg-muted rounded-xl px-4 py-2.5">
+                <input value={h.day} onChange={(e) => setHours((p) => p.map((x, j) => j === i ? { ...x, day: e.target.value } : x))} className="text-sm font-semibold text-foreground bg-transparent focus:outline-none w-24" />
+                <span className="text-muted-foreground">·</span>
+                <input value={h.hours} onChange={(e) => setHours((p) => p.map((x, j) => j === i ? { ...x, hours: e.target.value } : x))} className="text-sm text-muted-foreground bg-transparent focus:outline-none flex-1" />
+              </div>
+            ))}
+            <button onClick={() => setHours((p) => [...p, { day: "New Day", hours: "9:00 AM – 6:00 PM" }])} className="flex items-center justify-center gap-1 py-2 rounded-xl border border-dashed border-border text-muted-foreground text-xs hover:border-primary/40 hover:text-primary transition-colors"><Plus size={12} />Add hours</button>
+          </div>
+        </div>
+        <button onClick={handleSave} className={`w-full py-4 rounded-2xl font-bold text-sm transition-all ${saved ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground hover:opacity-90"}`}>
+          {saved ? "✓ Saved!" : "Save Changes"}
+        </button>
       </div>
     </div>
   );
@@ -1405,7 +1455,7 @@ function PrivacyPage() {
 
 function AboutUsPage() {
   return (
-    <div className="flex flex-col px-5 pt-2 pb-6 gap-5"><div><h1 className="text-2xl font-bold text-foreground">About Us</h1><p className="text-sm text-muted-foreground mt-0.5">Our story</p></div><div className="relative h-40 rounded-3xl overflow-hidden bg-primary"><img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=430&h=160&fit=crop&auto=format" alt="About" className="w-full h-full object-cover opacity-40" /><div className="absolute inset-0 flex items-center justify-center"><h2 className="text-4xl font-bold text-white" style={{ fontFamily:"'Cormorant Garamond', serif", fontStyle:"italic" }}>Ehjezly</h2></div></div><div className="bg-card border border-border rounded-2xl p-5"><h3 className="font-bold text-foreground mb-3">Our Mission</h3><p className="text-sm text-muted-foreground leading-relaxed">{"Ehjezly — 'Book for me' in Arabic — was built to make beauty and wellness effortlessly accessible across Kuwait. We connect clients with the finest salons, spas, trainers, and therapists in one seamless platform."}</p></div><div className="bg-card border border-border rounded-2xl p-5"><h3 className="font-bold text-foreground mb-3">Why Ehjezly?</h3><div className="flex flex-col gap-3">{["Real-time availability — no phone calls","Verified providers with genuine reviews","Bilingual — Arabic & English","Secure booking for Kuwait's top wellness brands"].map((item) => <div key={item} className="flex items-start gap-2.5"><div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Check size={11} className="text-primary" /></div><p className="text-sm text-foreground">{item}</p></div>)}</div></div><div className="bg-card border border-border rounded-2xl p-5"><h3 className="font-bold text-foreground mb-3">Contact Us</h3><div className="flex flex-col gap-2 text-sm">{[["Email","hello@ehjezly.kw"],["WhatsApp","+965 1234 5678"],["Instagram","@ehjezly"],["Version","1.0.0 (Beta)"]].map(([k,v]) => <div key={k} className="flex justify-between"><span className="text-muted-foreground">{k}</span><span className={k==="Email"?"font-medium text-primary":"font-medium"}>{v}</span></div>)}</div></div></div>
+    <div className="flex flex-col px-5 pt-2 pb-6 gap-5"><div><h1 className="text-2xl font-bold text-foreground">About Us</h1><p className="text-sm text-muted-foreground mt-0.5">Our story</p></div><div className="relative h-40 rounded-3xl overflow-hidden bg-primary"><img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=430&h=160&fit=crop&auto=format" alt="About" className="w-full h-full object-cover opacity-40" /><div className="absolute inset-0 flex items-center justify-center"><h2 className="text-4xl font-bold text-white" style={{ fontFamily:'"tgl30sansserifthinMed", "Josefin Sans", sans-serif', fontWeight: 500, letterSpacing: "0.08em" }}>Ehjezly</h2></div></div><div className="bg-card border border-border rounded-2xl p-5"><h3 className="font-bold text-foreground mb-3">Our Mission</h3><p className="text-sm text-muted-foreground leading-relaxed">{"Ehjezly — 'Book for me' in Arabic — was built to make beauty and wellness effortlessly accessible across Kuwait. We connect clients with the finest salons, spas, trainers, and therapists in one seamless platform."}</p></div><div className="bg-card border border-border rounded-2xl p-5"><h3 className="font-bold text-foreground mb-3">Why Ehjezly?</h3><div className="flex flex-col gap-3">{["Real-time availability — no phone calls","Verified providers with genuine reviews","Bilingual — Arabic & English","Secure booking for Kuwait's top wellness brands"].map((item) => <div key={item} className="flex items-start gap-2.5"><div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Check size={11} className="text-primary" /></div><p className="text-sm text-foreground">{item}</p></div>)}</div></div><div className="bg-card border border-border rounded-2xl p-5"><h3 className="font-bold text-foreground mb-3">Contact Us</h3><div className="flex flex-col gap-2 text-sm">{[["Email","hello@ehjezly.kw"],["WhatsApp","+965 1234 5678"],["Instagram","@ehjezly"],["Version","1.0.0 (Beta)"]].map(([k,v]) => <div key={k} className="flex justify-between"><span className="text-muted-foreground">{k}</span><span className={k==="Email"?"font-medium text-primary":"font-medium"}>{v}</span></div>)}</div></div></div>
   );
 }
 
