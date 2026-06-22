@@ -123,7 +123,7 @@ const PORTFOLIO_IMAGES = [
   "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=600&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=600&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1519751138087-5bf79df62d5b?w=600&h=600&fit=crop&auto=format",
-  "https://images.unsplash.com/photo-1582095133179-bfd08e2fb6b3?w=600&h=600&fit=crop&auto=format",
+  "https://images.unsplash.com/photo-1560066984-138daaa0a9e9?w=600&h=600&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=600&h=600&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=600&h=600&fit=crop&auto=format",
 ];
@@ -270,7 +270,7 @@ export default function App() {
           </div>
         )}
 
-        <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }} className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }} onClick={() => showNotifPopup && setShowNotifPopup(false)}>
+        <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }} className="flex-1 overflow-y-auto pb-24" style={{ scrollbarWidth: "none" }} onClick={() => showNotifPopup && setShowNotifPopup(false)}>
           {view === "splash" && <SplashScreen onStart={() => navigate("login")} />}
           {view === "login" && <LoginScreen email={loginEmail} setEmail={setLoginEmail} password={loginPassword} setPassword={setLoginPassword} accountType={accountType} setAccountType={setAccountType} onLogin={() => navigate(accountType === "personal" ? "client-home" : "provider-dashboard")} onSignup={() => navigate("signup")} onForgot={() => navigate("forgot-password")} />}
           {view === "signup" && <SignupScreen signupType={signupType} setSignupType={setSignupType} onComplete={() => navigate(accountType === "personal" ? "client-home" : "provider-dashboard")} onBack={goBack} />}
@@ -283,7 +283,7 @@ export default function App() {
           {view === "my-appointments" && <MyAppointments bookingRequests={bookingRequests} onSearch={() => navigate("search-results")} onProvider={openProvider} onCancelRequest={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "cancelled" } : r))} onAddReview={addReview} />}
           {view === "business-bookings" && <BusinessBookings bookingRequests={bookingRequests} onAccept={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "confirmed" } : r))} onReject={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "rejected" } : r))} />}
           {view === "provider-dashboard" && <ProviderDashboard accountName={activeAccount.name} onCalendar={() => navigate("provider-calendar")} onRevenueDay={(day) => { setRevenueDetailDay(day); navigate("revenue-detail"); }} />}
-          {view === "provider-calendar" && <ProviderCalendar accountType={accountType} />}
+          {view === "provider-calendar" && <ProviderCalendar accountType={accountType} bookingRequests={bookingRequests} onProvider={openProvider} />}
           {view === "service-setup" && <ServiceSetup />}
           {view === "business-profile" && <BusinessProfileEditor />}
           {view === "settings" && <SettingsScreen accounts={accounts} activeAccount={activeAccount} accountType={accountType} onSwitchAccount={switchAccount} onAddAccount={() => navigate("signup")} onEditAccount={() => navigate("edit-account")} onServiceSetup={() => navigate("service-setup")} onBusinessProfile={() => navigate("business-profile")} onPrivacy={() => navigate("privacy")} onAboutUs={() => navigate("about-us")} onGiftCards={() => navigate("gift-cards")} onInviteFriends={() => navigate("invite-friends")} onFavorites={() => navigate("favorites")} onRevenue={() => navigate("revenue-detail")} onLogout={() => { setView("splash"); setHistory([]); }} />}
@@ -296,7 +296,7 @@ export default function App() {
           {view === "revenue-detail" && <RevenueDetailPage selectedDay={revenueDetailDay} onBack={goBack} onDaySelect={setRevenueDetailDay} />}
         </motion.div>
 
-        {isAuthenticated && <div className="flex-shrink-0"><BottomNav activeTab={activeTab} onTab={(tab) => { setActiveTab(tab); if (tab === "home") navigate(accountType === "personal" ? "client-home" : "provider-dashboard"); if (tab === "bookings") navigate(accountType === "personal" ? "my-appointments" : "business-bookings"); if (tab === "calendar") navigate("provider-calendar"); if (tab === "profile") navigate("settings"); }} /></div>}
+        {isAuthenticated && <div className="absolute bottom-0 left-0 right-0 z-40"><BottomNav activeTab={activeTab} onTab={(tab) => { setActiveTab(tab); if (tab === "home") navigate(accountType === "personal" ? "client-home" : "provider-dashboard"); if (tab === "bookings") navigate(accountType === "personal" ? "my-appointments" : "business-bookings"); if (tab === "calendar") navigate("provider-calendar"); if (tab === "profile") navigate("settings"); }} /></div>}
       </div>
     </div>
   );
@@ -304,61 +304,133 @@ export default function App() {
 
 // ── Splash — logo only, auto-transitions to login after 3 s ──────────────────
 function SplashScreen({ onStart }: { onStart: () => void }) {
-  // Auto-navigate after 3 seconds
   const [exiting, setExiting] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => {
       setExiting(true);
-      setTimeout(onStart, 500); // wait for fade-out
+      setTimeout(onStart, 600);
     }, 3000);
     return () => clearTimeout(t);
   }, []);
 
   return (
     <motion.div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#F3EDF8" }}
+      className="flex min-h-screen flex-col items-center justify-center relative overflow-hidden"
+      style={{ backgroundColor: "#1B1324" }}
       animate={{ opacity: exiting ? 0 : 1 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.6 }}
     >
-      <div className="flex flex-col items-center gap-5">
-        {/* Logo wordmark */}
-        <motion.h1
-          className="text-primary"
-          style={{
-            fontFamily: '"tgl30sansserifthinMed", "Josefin Sans", sans-serif',
-            fontWeight: 500,
-            fontSize: "4.5rem",
-            letterSpacing: "0.06em",
-            lineHeight: 1,
-          }}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        >
-          Ehjezly
-        </motion.h1>
+      {/* Background glow blobs */}
+      <motion.div
+        className="absolute rounded-full"
+        style={{ width: 340, height: 340, background: "radial-gradient(circle, rgba(107,33,168,0.45) 0%, transparent 70%)", top: -60, right: -80 }}
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.4, ease: "easeOut" }}
+      />
+      <motion.div
+        className="absolute rounded-full"
+        style={{ width: 260, height: 260, background: "radial-gradient(circle, rgba(248,205,66,0.18) 0%, transparent 70%)", bottom: 80, left: -60 }}
+        initial={{ opacity: 0, scale: 0.6 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.6, delay: 0.3, ease: "easeOut" }}
+      />
+      <motion.div
+        className="absolute rounded-full"
+        style={{ width: 180, height: 180, background: "radial-gradient(circle, rgba(157,78,221,0.3) 0%, transparent 70%)", bottom: 200, right: 20 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2, delay: 0.5 }}
+      />
 
-        {/* Thin underline that sweeps in */}
+      {/* Center content */}
+      <div className="flex flex-col items-center gap-6 relative z-10 px-8">
+        {/* Icon mark */}
         <motion.div
-          className="h-px bg-primary/30 origin-center"
-          style={{ width: "7rem" }}
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ delay: 0.55, duration: 0.7, ease: "easeOut" }}
-        />
+          className="w-20 h-20 rounded-3xl flex items-center justify-center"
+          style={{ background: "linear-gradient(135deg, #6B21A8 0%, #9D4EDD 100%)", boxShadow: "0 0 40px rgba(107,33,168,0.5)" }}
+          initial={{ opacity: 0, scale: 0.5, rotate: -12 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <Sparkles size={36} className="text-[#F8CD42]" />
+        </motion.div>
+
+        {/* Wordmark */}
+        <motion.div
+          className="flex flex-col items-center gap-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <h1
+            style={{
+              fontFamily: '"tgl30sansserifthinMed", "Josefin Sans", sans-serif',
+              fontWeight: 500,
+              fontSize: "3.8rem",
+              letterSpacing: "0.08em",
+              lineHeight: 1,
+              color: "#F3EDF8",
+            }}
+          >
+            Ehjezly
+          </h1>
+          {/* Animated underline */}
+          <motion.div
+            className="h-px origin-center"
+            style={{ width: "6rem", background: "linear-gradient(90deg, transparent, #F8CD42, transparent)" }}
+            initial={{ scaleX: 0, opacity: 0 }}
+            animate={{ scaleX: 1, opacity: 1 }}
+            transition={{ delay: 0.75, duration: 0.7, ease: "easeOut" }}
+          />
+        </motion.div>
 
         {/* Tagline */}
         <motion.p
-          className="text-primary/50 text-xs tracking-[0.28em] uppercase"
-          style={{ fontFamily: '"tgl30sansserifthinMed", "Josefin Sans", sans-serif' }}
+          className="text-xs tracking-[0.3em] uppercase"
+          style={{ color: "rgba(243,237,248,0.45)", fontFamily: '"tgl30sansserifthinMed", "Josefin Sans", sans-serif' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.7 }}
+          transition={{ delay: 1.0, duration: 0.8 }}
         >
-          Beauty &amp; Wellness
+          Beauty &amp; Wellness · Kuwait
         </motion.p>
+
+        {/* Pill badges */}
+        <motion.div
+          className="flex gap-3 mt-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.3, duration: 0.6 }}
+        >
+          {["Salons", "Spas", "Trainers", "Therapy"].map((label) => (
+            <span
+              key={label}
+              className="px-3 py-1 rounded-full text-[10px] font-semibold"
+              style={{ background: "rgba(107,33,168,0.25)", color: "rgba(243,237,248,0.7)", border: "1px solid rgba(107,33,168,0.4)" }}
+            >
+              {label}
+            </span>
+          ))}
+        </motion.div>
       </div>
+
+      {/* Bottom loading dots */}
+      <motion.div
+        className="absolute bottom-16 flex gap-1.5"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.6, duration: 0.5 }}
+      >
+        {[0, 1, 2].map((i) => (
+          <motion.div
+            key={i}
+            className="w-1.5 h-1.5 rounded-full bg-primary"
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+          />
+        ))}
+      </motion.div>
     </motion.div>
   );
 }
@@ -750,7 +822,7 @@ function MyAppointments({ bookingRequests, onSearch, onProvider, onCancelRequest
       <div className="flex flex-col gap-3">
         {tab === "upcoming" && upcoming.map((req, i) => (
           <motion.div key={req.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="bg-card border border-border rounded-2xl p-4">
-            <div className="flex items-start justify-between mb-2"><div><h3 className="font-bold text-foreground text-sm">{req.providerName}</h3><p className="text-xs text-muted-foreground mt-0.5">{req.service}</p></div><span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColor(req.status)}`}>{req.status}</span></div>
+            <div className="flex items-start justify-between mb-2"><div><button onClick={() => { const p = ALL_PROVIDERS.find((x) => x.id === req.providerId); if (p) onProvider(p); }} className="font-bold text-foreground text-sm text-left hover:text-primary transition-colors">{req.providerName}</button><p className="text-xs text-muted-foreground mt-0.5">{req.service}</p></div><span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColor(req.status)}`}>{req.status}</span></div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3"><span className="flex items-center gap-1"><CalendarDays size={11} />{req.date}</span><span className="flex items-center gap-1"><Clock size={11} />{req.time}</span><span className="ml-auto font-bold text-foreground">{req.price}</span></div>
             <div className="flex gap-2">
               <button onClick={() => openMap(req.providerLocation)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-primary transition-colors"><Navigation size={12} />Open in Maps</button>
@@ -767,7 +839,7 @@ function MyAppointments({ bookingRequests, onSearch, onProvider, onCancelRequest
 
         {tab === "past" && staticCompleted.map((item, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="bg-card border border-border rounded-2xl p-4">
-            <div className="flex items-start justify-between mb-2"><div><h3 className="font-bold text-foreground text-sm">{item.providerName}</h3><p className="text-xs text-muted-foreground mt-0.5">{item.service}</p></div><span className="text-xs font-bold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">completed</span></div>
+            <div className="flex items-start justify-between mb-2"><div><button onClick={() => { const p = ALL_PROVIDERS.find((x) => x.id === item.providerId); if (p) onProvider(p); }} className="font-bold text-foreground text-sm text-left hover:text-primary transition-colors">{item.providerName}</button><p className="text-xs text-muted-foreground mt-0.5">{item.service}</p></div><span className="text-xs font-bold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">completed</span></div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3"><span className="flex items-center gap-1"><CalendarDays size={11} />{item.date}</span><span className="flex items-center gap-1"><Clock size={11} />{item.time}</span><span className="ml-auto font-bold text-foreground">{item.price}</span></div>
             <div className="flex gap-2">
               <button onClick={() => openMap(item.location)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-primary transition-colors"><Navigation size={12} />Open in Maps</button>
@@ -872,7 +944,7 @@ function durationToMins(d: string): number {
 }
 
 // ── Provider Calendar (week/month, proportional blocks, multi-client per hour) ─
-function ProviderCalendar({ accountType }: { accountType: AccountType }) {
+function ProviderCalendar({ accountType, bookingRequests, onProvider }: { accountType: AccountType; bookingRequests: BookingRequest[]; onProvider: (p: Provider) => void }) {
   const [format, setFormat] = useState<CalFormat>("week");
   const [selectedDay, setSelectedDay] = useState(1);
   const [selectedAppt, setSelectedAppt] = useState<CalendarAppt | null>(null);
@@ -886,10 +958,29 @@ function ProviderCalendar({ accountType }: { accountType: AccountType }) {
   const SLOT_H = 56; // px per 60-minute row
   const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const dayBreaks = breaks[selectedDay] ?? [];
-  const dayAppts: CalendarAppt[] = [
-    ...(SCHEDULE_BY_DAY[selectedDay] ?? []).filter((a) => !cancelledIds.includes(a.id)).map((a) => ({ ...a, time: apptTimes[a.id] ?? a.time })),
-    ...dayBreaks,
-  ];
+
+  // For personal accounts, convert their bookingRequests into CalendarAppt format
+  const personalAppts: CalendarAppt[] = accountType === "personal"
+    ? bookingRequests
+        .filter((r) => (r.status === "pending" || r.status === "confirmed") && !cancelledIds.includes(r.id))
+        .map((r) => ({
+          id: r.id,
+          time: r.time.replace(" AM", "").replace(" PM", (r.time.includes("PM") && !r.time.startsWith("12")) ? "" : ""),
+          client: r.providerName,
+          service: r.service,
+          duration: "1 hr",
+          price: r.price,
+          date: r.date,
+          type: "appointment" as const,
+        }))
+    : [];
+
+  const dayAppts: CalendarAppt[] = accountType === "personal"
+    ? [...personalAppts, ...dayBreaks]
+    : [
+        ...(SCHEDULE_BY_DAY[selectedDay] ?? []).filter((a) => !cancelledIds.includes(a.id)).map((a) => ({ ...a, time: apptTimes[a.id] ?? a.time })),
+        ...dayBreaks,
+      ];
   function getColor(item: CalendarAppt) {
     if (item.type === "break") return "bg-muted/80 border-border text-muted-foreground";
     if (completedIds.includes(item.id)) return "bg-muted/60 border-border text-muted-foreground";
@@ -981,7 +1072,7 @@ function ProviderCalendar({ accountType }: { accountType: AccountType }) {
   return (
     <div className="flex flex-col px-5 pt-2 pb-4 gap-5">
       <div className="flex items-center justify-between">
-        <div><h1 className="text-2xl font-bold text-foreground">Calendar</h1><p className="text-sm text-muted-foreground mt-0.5">{MONTH_NAMES[cMonth]} {cYear}</p></div>
+        <div><h1 className="text-2xl font-bold text-foreground">Calendar</h1><p className="text-sm text-muted-foreground mt-0.5">{accountType === "personal" ? "Your upcoming appointments" : `${MONTH_NAMES[cMonth]} ${cYear}`}</p></div>
         <div className="flex gap-1">
           {accountType === "business" && <button onClick={() => setShowBreakSheet(true)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-muted border border-border text-muted-foreground text-xs font-bold hover:border-primary/40 transition-colors"><Plus size={12} />Break</button>}
           {accountType === "business" && <button onClick={() => setOffDays((prev) => prev.includes(selectedDay) ? prev.filter((d) => d !== selectedDay) : [...prev, selectedDay])} className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all ${isOffDay ? "bg-destructive/10 text-destructive border-destructive/30" : "bg-muted border-border text-muted-foreground hover:border-primary/40"}`}>{isOffDay ? "Mark On" : "Mark Off"}</button>}
@@ -1017,7 +1108,7 @@ function ProviderCalendar({ accountType }: { accountType: AccountType }) {
         isOffDay
           ? <div className="bg-card border border-border rounded-2xl py-12 text-center"><p className="text-muted-foreground text-sm font-medium">Day Off</p></div>
           : dayAppts.length === 0
-            ? <div className="bg-card border border-border rounded-2xl py-12 text-center"><p className="text-muted-foreground text-sm">No appointments scheduled</p></div>
+            ? <div className="bg-card border border-border rounded-2xl py-12 text-center"><p className="text-muted-foreground text-sm">{accountType === "personal" ? "No appointments on this day" : "No appointments scheduled"}</p></div>
             : renderTimeGrid()
       )}
 
@@ -1053,7 +1144,7 @@ function ProviderCalendar({ accountType }: { accountType: AccountType }) {
           <div className="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onClick={() => setSelectedAppt(null)} />
           <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="relative bg-card rounded-t-3xl border-t border-border px-5 pt-5 pb-10 z-10 shadow-2xl">
             <div className="flex items-center justify-between mb-5"><h2 className="text-lg font-bold text-foreground">{selectedAppt.type === "break" ? "Break Block" : "Appointment Details"}</h2><button onClick={() => setSelectedAppt(null)} className="p-1.5 rounded-full bg-muted text-muted-foreground"><X size={16} /></button></div>
-            {selectedAppt.type === "break" ? <div className="flex flex-col gap-3 mb-5"><Row label="Time" value={selectedAppt.time} /><Row label="Duration" value={selectedAppt.duration} /></div> : <div className="flex flex-col gap-3 mb-5"><Row label={accountType === "personal" ? "Provider" : "Client"} value={selectedAppt.client} /><Row label="Service" value={selectedAppt.service} /><Row label="Date" value={selectedAppt.date} /><Row label="Time" value={apptTimes[selectedAppt.id] ?? selectedAppt.time} /><Row label="Duration" value={selectedAppt.duration} /><div className="flex justify-between border-t border-border pt-3 mt-1"><span className="font-bold text-sm">Total</span><span className="font-bold text-primary text-sm">{selectedAppt.price}</span></div></div>}
+            {selectedAppt.type === "break" ? <div className="flex flex-col gap-3 mb-5"><Row label="Time" value={selectedAppt.time} /><Row label="Duration" value={selectedAppt.duration} /></div> : <div className="flex flex-col gap-3 mb-5">{accountType === "personal" ? (<div className="flex justify-between text-sm"><span className="text-muted-foreground">Provider</span><button onClick={() => { const p = ALL_PROVIDERS.find((x) => x.name === selectedAppt.client); if (p) { onProvider(p); setSelectedAppt(null); } }} className="font-semibold text-primary hover:underline">{selectedAppt.client}</button></div>) : <Row label="Client" value={selectedAppt.client} />}<Row label="Service" value={selectedAppt.service} /><Row label="Date" value={selectedAppt.date} /><Row label="Time" value={apptTimes[selectedAppt.id] ?? selectedAppt.time} /><Row label="Duration" value={selectedAppt.duration} /><div className="flex justify-between border-t border-border pt-3 mt-1"><span className="font-bold text-sm">Total</span><span className="font-bold text-primary text-sm">{selectedAppt.price}</span></div></div>}
             {accountType === "personal" && selectedAppt.type === "appointment" && <div className="flex flex-col gap-2"><button onClick={() => setShowRescheduleSheet(true)} className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity">Reschedule</button><button onClick={() => { setCancelledIds((p) => [...p, selectedAppt.id]); setSelectedAppt(null); }} className="w-full py-3.5 rounded-2xl border border-destructive text-destructive font-bold text-sm hover:bg-destructive/5 transition-colors">Cancel Booking</button></div>}
             {accountType === "business" && selectedAppt.type === "appointment" && <div className="flex flex-col gap-2"><button onClick={() => { if (!completedIds.includes(selectedAppt.id)) setCompletedIds((p) => [...p, selectedAppt.id]); setSelectedAppt(null); }} disabled={completedIds.includes(selectedAppt.id)} className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 disabled:opacity-50">{completedIds.includes(selectedAppt.id) ? "✓ Marked Complete" : "Mark Complete"}</button><button onClick={() => { setCancelledIds((p) => [...p, selectedAppt.id]); setSelectedAppt(null); }} className="w-full py-3.5 rounded-2xl border border-destructive text-destructive font-bold text-sm hover:bg-destructive/5">Cancel Appointment</button></div>}
             {selectedAppt.type === "break" && <button onClick={() => { setBreaks((p) => { const c = { ...p }; c[selectedDay] = (c[selectedDay] ?? []).filter((b) => b.id !== selectedAppt.id); return c; }); setSelectedAppt(null); }} className="w-full py-3.5 rounded-2xl border border-destructive text-destructive font-bold text-sm hover:bg-destructive/5">Remove Break</button>}
