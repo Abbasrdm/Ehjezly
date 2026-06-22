@@ -1,0 +1,18 @@
+/* OTTERO Medium — load font files if available */
+@font-face {
+  font-family: "tgl30sansserifthinMed";
+  src: url("/fonts/OTTERO-Medium.woff2") format("woff2"),
+       url("/fonts/OTTERO-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Josefin Sans as fallback when OTTERO files are not present */
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* Utility class for the logo font */
+.font-logo {
+  font-family: "tgl30sansserifthinMed", "Josefin Sans", sans-serif;
+  letter-spacing: 0.04em;
+}
