@@ -123,7 +123,7 @@ const PORTFOLIO_IMAGES = [
   "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&h=600&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=600&h=600&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1519751138087-5bf79df62d5b?w=600&h=600&fit=crop&auto=format",
-  "https://images.unsplash.com/photo-1560066984-138daaa0a9e9?w=600&h=600&fit=crop&auto=format",
+  "https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=600&h=600&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=600&h=600&fit=crop&auto=format",
   "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=600&h=600&fit=crop&auto=format",
 ];
@@ -345,30 +345,19 @@ function SplashScreen({ onStart }: { onStart: () => void }) {
 
       {/* Center content */}
       <div className="flex flex-col items-center gap-6 relative z-10 px-8">
-        {/* Icon mark */}
-        <motion.div
-          className="w-20 h-20 rounded-3xl flex items-center justify-center"
-          style={{ background: "linear-gradient(135deg, #6B21A8 0%, #9D4EDD 100%)", boxShadow: "0 0 40px rgba(107,33,168,0.5)" }}
-          initial={{ opacity: 0, scale: 0.5, rotate: -12 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <Sparkles size={36} className="text-[#F8CD42]" />
-        </motion.div>
-
         {/* Wordmark */}
         <motion.div
           className="flex flex-col items-center gap-2"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ delay: 0.2, duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
         >
           <h1
             style={{
               fontFamily: '"tgl30sansserifthinMed", "Josefin Sans", sans-serif',
               fontWeight: 500,
-              fontSize: "3.8rem",
-              letterSpacing: "0.08em",
+              fontSize: "4.2rem",
+              letterSpacing: "0.1em",
               lineHeight: 1,
               color: "#F3EDF8",
             }}
@@ -381,17 +370,17 @@ function SplashScreen({ onStart }: { onStart: () => void }) {
             style={{ width: "6rem", background: "linear-gradient(90deg, transparent, #F8CD42, transparent)" }}
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}
-            transition={{ delay: 0.75, duration: 0.7, ease: "easeOut" }}
+            transition={{ delay: 0.65, duration: 0.7, ease: "easeOut" }}
           />
         </motion.div>
 
         {/* Tagline */}
         <motion.p
           className="text-xs tracking-[0.3em] uppercase"
-          style={{ color: "rgba(243,237,248,0.45)", fontFamily: '"tgl30sansserifthinMed", "Josefin Sans", sans-serif' }}
+          style={{ color: "rgba(243,237,248,0.45)", fontFamily: "Inter, sans-serif", letterSpacing: "0.25em" }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.0, duration: 0.8 }}
+          transition={{ delay: 0.9, duration: 0.8 }}
         >
           Beauty &amp; Wellness · Kuwait
         </motion.p>
@@ -401,13 +390,13 @@ function SplashScreen({ onStart }: { onStart: () => void }) {
           className="flex gap-3 mt-2"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.3, duration: 0.6 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
         >
           {["Salons", "Spas", "Trainers", "Therapy"].map((label) => (
             <span
               key={label}
               className="px-3 py-1 rounded-full text-[10px] font-semibold"
-              style={{ background: "rgba(107,33,168,0.25)", color: "rgba(243,237,248,0.7)", border: "1px solid rgba(107,33,168,0.4)" }}
+              style={{ background: "rgba(107,33,168,0.25)", color: "rgba(243,237,248,0.7)", border: "1px solid rgba(107,33,168,0.4)", fontFamily: "Inter, sans-serif" }}
             >
               {label}
             </span>
@@ -448,7 +437,7 @@ function LoginScreen({ email, setEmail, password, setPassword, accountType, setA
   return (
     <div className="flex flex-col min-h-screen px-6 pt-16 pb-8">
       <div className="mb-10">
-        <h1 className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic" }}>Welcome back</h1>
+        <h1 className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: "Inter, sans-serif", fontStyle: "normal" }}>Welcome back</h1>
         <p className="text-muted-foreground text-sm">Sign in to your account</p>
       </div>
       <div className="flex gap-1 mb-8 bg-muted rounded-2xl p-1">{(["personal", "business"] as AccountType[]).map((t) => <button key={t} onClick={() => setAccountType(t)} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${accountType === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{t === "personal" ? "Personal" : "Business"}</button>)}</div>
@@ -487,7 +476,7 @@ function SignupScreen({ signupType, setSignupType, onComplete, onBack }: { signu
   return (
     <div className="flex flex-col min-h-screen px-6 pt-10 pb-8">
       <button onClick={onBack} className="flex items-center gap-1 text-muted-foreground mb-8 self-start"><ChevronLeft size={18} /><span className="text-sm">Back</span></button>
-      <h1 className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic" }}>Create account</h1>
+      <h1 className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: "Inter, sans-serif", fontStyle: "normal" }}>Create account</h1>
       <p className="text-muted-foreground text-sm mb-8">{"Join Kuwait's beauty marketplace"}</p>
       <div className="flex gap-1 mb-6 bg-muted rounded-2xl p-1">{(["personal", "business"] as AccountType[]).map((t) => <button key={t} onClick={() => setSignupType(t)} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${signupType === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{t === "personal" ? "Personal" : "Business"}</button>)}</div>
       <div className="flex flex-col gap-3 mb-6">
@@ -521,7 +510,7 @@ function ForgotPasswordPage({ onBack }: { onBack: () => void }) {
   return (
     <div className="flex flex-col min-h-screen px-6 pt-10 pb-8">
       <button onClick={onBack} className="flex items-center gap-1 text-muted-foreground mb-8 self-start"><ChevronLeft size={18} /><span className="text-sm">Back</span></button>
-      <h1 className="text-4xl font-bold text-primary mb-2" style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic" }}>Reset password</h1>
+      <h1 className="text-4xl font-bold text-primary mb-2" style={{ fontFamily: "Inter, sans-serif", fontStyle: "normal" }}>Reset password</h1>
       <p className="text-muted-foreground text-sm mb-8">{"Enter your email or phone and we'll send you a reset link."}</p>
       <div className="mb-6">
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Email or Phone</label>
@@ -898,7 +887,6 @@ function BusinessBookings({ bookingRequests, onAccept, onReject }: { bookingRequ
 // ── Provider Dashboard (clickable chart, dynamic revenue) ─────────────────────
 function ProviderDashboard({ accountName, onCalendar, onRevenueDay }: { accountName: string; onCalendar: () => void; onRevenueDay: (day: string) => void }) {
   const firstName = accountName.split(" ")[0];
-  const [chartPopup, setChartPopup] = useState<{ day: string; revenue: number } | null>(null);
   const todayRevStr = `${TODAY_REVENUE} KWD`;
   return (
     <div className="flex flex-col px-5 pt-2 pb-4 gap-6">
@@ -908,21 +896,15 @@ function ProviderDashboard({ accountName, onCalendar, onRevenueDay }: { accountN
       </div>
       <div className="bg-card border border-border rounded-2xl p-4">
         <div className="flex items-center justify-between mb-1"><h2 className="text-sm font-bold text-foreground">Revenue — This Week</h2><div className="flex items-center gap-2"><span className="text-xs text-primary font-bold flex items-center gap-0.5"><TrendingUp size={12} />+18%</span><button onClick={() => onRevenueDay(REVENUE_DATA.find(d => d.dayIdx === TODAY_IDX)?.day ?? "Fri")} className="text-xs text-muted-foreground font-semibold hover:text-primary transition-colors">See all</button></div></div>
-        <p className="text-xs text-muted-foreground mb-3">Tap any day for details</p>
-        {chartPopup && (
-          <button onClick={() => { onRevenueDay(chartPopup.day); setChartPopup(null); }} className="w-full mb-3 flex items-center justify-between bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 hover:bg-primary/10 transition-colors">
-            <div className="text-left"><p className="text-sm font-bold text-foreground">{chartPopup.day}</p><p className="text-xs text-muted-foreground">Tap to view full day breakdown</p></div>
-            <div className="text-right"><p className="text-lg font-bold text-primary">{chartPopup.revenue} KWD</p><ChevronRight size={14} className="text-muted-foreground ml-auto" /></div>
-          </button>
-        )}
+        <p className="text-xs text-muted-foreground mb-3">Tap a day dot for details</p>
         <ResponsiveContainer width="100%" height={110}>
           <AreaChart data={REVENUE_DATA} margin={{ top: 4, right: 0, left: -30, bottom: 0 }}
-            onClick={(data) => { if (data?.activePayload?.[0]) { const d = data.activePayload[0].payload; setChartPopup({ day: d.day, revenue: d.revenue }); } }}>
+            onClick={(data) => { if (data?.activePayload?.[0]) { const d = data.activePayload[0].payload; onRevenueDay(d.day); } }}>
             <defs><linearGradient id="dashRevGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6B21A8" stopOpacity={0.25} /><stop offset="100%" stopColor="#6B21A8" stopOpacity={0} /></linearGradient></defs>
             <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#7C5C9E" }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 9, fill: "#7C5C9E" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "12px", fontSize: "11px" }} labelStyle={{ color: "var(--foreground)", fontWeight: 600 }} cursor={{ stroke: "#6B21A8", strokeWidth: 1, strokeDasharray: "4 4" }} />
-            <Area type="monotone" dataKey="revenue" stroke="#F8CD42" strokeWidth={2.5} fill="url(#dashRevGrad)" dot={false} activeDot={{ r: 5, fill: "#F8CD42", stroke: "#6B21A8", strokeWidth: 2 }} />
+            <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "10px", fontSize: "11px", padding: "6px 10px" }} labelStyle={{ color: "var(--foreground)", fontWeight: 700, fontSize: "11px" }} formatter={(value: number) => [`${value} KWD`, ""]} cursor={{ stroke: "#6B21A8", strokeWidth: 1, strokeDasharray: "4 4" }} />
+            <Area type="monotone" dataKey="revenue" stroke="#F8CD42" strokeWidth={2.5} fill="url(#dashRevGrad)" dot={{ r: 3, fill: "#F8CD42", stroke: "#6B21A8", strokeWidth: 1.5, cursor: "pointer" }} activeDot={{ r: 6, fill: "#F8CD42", stroke: "#6B21A8", strokeWidth: 2, cursor: "pointer" }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -1443,7 +1425,7 @@ function GiftCardsPage() {
     </div>
   );
   return(
-    <div className="flex flex-col px-5 pt-2 pb-4 gap-6"><div><h1 className="text-2xl font-bold text-foreground">Gift Cards</h1><p className="text-sm text-muted-foreground mt-0.5">Share the gift of wellness</p></div><div className="relative h-36 rounded-3xl overflow-hidden bg-gradient-to-br from-primary to-[#9D4EDD]"><div className="absolute inset-0 flex flex-col justify-between p-5"><div className="flex items-center gap-2"><Sparkles size={20} className="text-[#F8CD42]"/><span className="text-white font-bold" style={{fontFamily:"'Cormorant Garamond',serif",fontStyle:"italic",fontSize:"1.2rem"}}>Ehjezly</span></div><div><p className="text-white/60 text-xs uppercase tracking-widest">Gift Card</p><p className="text-white text-3xl font-bold">{selected} KWD</p></div></div></div>
+    <div className="flex flex-col px-5 pt-2 pb-4 gap-6"><div><h1 className="text-2xl font-bold text-foreground">Gift Cards</h1><p className="text-sm text-muted-foreground mt-0.5">Share the gift of wellness</p></div><div className="relative h-36 rounded-3xl overflow-hidden bg-gradient-to-br from-primary to-[#9D4EDD]"><div className="absolute inset-0 flex flex-col justify-between p-5"><div className="flex items-center gap-2"><Sparkles size={20} className="text-[#F8CD42]"/><span className="text-white font-bold" style={{fontFamily:"Inter,sans-serif",fontSize:"1.2rem"}}>Ehjezly</span></div><div><p className="text-white/60 text-xs uppercase tracking-widest">Gift Card</p><p className="text-white text-3xl font-bold">{selected} KWD</p></div></div></div>
     <div><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Select Amount</p><div className="grid grid-cols-4 gap-2">{amounts.map((a)=><button key={a} onClick={()=>setSelected(a)} className={`py-3 rounded-2xl text-sm font-bold border transition-all ${selected===a?"bg-primary text-primary-foreground border-primary":"bg-card text-foreground border-border hover:border-primary/40"}`}>{a} KWD</button>)}</div></div>
     <div className="flex flex-col gap-4"><div><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{"Recipient's Email or Phone"}</label><input value={recipient} onChange={(e)=>setRecipient(e.target.value)} placeholder="noura@gmail.com" type="text" inputMode="email" className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"/></div><div><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Message (optional)</label><textarea value={message} onChange={(e)=>setMessage(e.target.value)} placeholder="Treat yourself!" rows={3} className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm resize-none"/></div></div>
     <button onClick={()=>recipient&&setSent(true)} disabled={!recipient} className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-bold text-base hover:opacity-90 disabled:opacity-40">Send Gift Card — {selected} KWD</button></div>
