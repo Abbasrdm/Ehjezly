@@ -190,6 +190,8 @@ export default function App() {
   const [view, setView] = useState<View>("splash");
   const [accountType, setAccountType] = useState<AccountType>("personal");
   const [accounts, setAccounts] = useState<Account[]>(MOCK_ACCOUNTS);
+  const [isGuest, setIsGuest] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
   const [history, setHistory] = useState<View[]>([]);
   const [activeTab, setActiveTab] = useState<"home" | "bookings" | "calendar" | "profile">("home");
   const [selectedDate, setSelectedDate] = useState(0);
@@ -208,6 +210,8 @@ export default function App() {
   const [services, setServices] = useState<ServiceItem[]>(INIT_SERVICES);
 
   const isAuthenticated = view !== "splash" && view !== "login" && view !== "signup" && view !== "forgot-password";
+  // Guest tries to book — intercept and show modal
+  function handleGuestBook() { setShowGuestModal(true); }
   const activeAccount = accounts.find((a) => a.active) ?? accounts[0];
   const days = getNextDays(14);
   const ROOT_VIEWS: View[] = ["client-home", "provider-dashboard", "settings", "my-appointments", "business-bookings", "provider-calendar"];
@@ -230,7 +234,7 @@ export default function App() {
   }
   function goBack() { const prev = history[history.length - 1]; if (prev) { setHistory((h) => h.slice(0, -1)); setView(prev); } }
   function openProvider(p: Provider) { setSelectedProvider(p); navigate("provider-profile"); }
-  function openOfferBooking(providerId: string) { const p = ALL_PROVIDERS.find((x) => x.id === providerId); if (!p) return; setSelectedProvider(p); navigate("booking-flow"); }
+  function openOfferBooking(providerId: string) { if (isGuest) { handleGuestBook(); return; } const p = ALL_PROVIDERS.find((x) => x.id === providerId); if (!p) return; setSelectedProvider(p); navigate("booking-flow"); }
   function toggleFavorite(id: string) { setFavorites((prev) => prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]); }
   function switchAccount(id: string) { const acc = accounts.find((a) => a.id === id); if (!acc || acc.active) return; setAccounts((prev) => prev.map((a) => ({ ...a, active: a.id === id }))); setAccountType(acc.type); navigate(acc.type === "personal" ? "client-home" : "provider-dashboard"); }
   function confirmBooking() {
@@ -276,13 +280,32 @@ export default function App() {
 
         <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }} className="flex-1 overflow-y-auto pb-24" style={{ scrollbarWidth: "none" }} onClick={() => showNotifPopup && setShowNotifPopup(false)}>
           {view === "splash" && <SplashScreen onStart={() => navigate("login")} />}
-          {view === "login" && <LoginScreen email={loginEmail} setEmail={setLoginEmail} password={loginPassword} setPassword={setLoginPassword} accountType={accountType} setAccountType={setAccountType} onLogin={(type) => { setAccountType(type); setAccounts((prev) => prev.map((a) => ({ ...a, active: a.type === type && (type === "personal" ? a.email === "reem@gmail.com" : a.email === "burak@gmail.com") }))); navigate(type === "personal" ? "client-home" : "provider-dashboard"); }} onSignup={() => navigate("signup")} onForgot={() => navigate("forgot-password")} accounts={accounts} />}
+          {view === "login" && <LoginScreen email={loginEmail} setEmail={setLoginEmail} password={loginPassword} setPassword={setLoginPassword} accountType={accountType} setAccountType={setAccountType} onLogin={(type) => { setIsGuest(false); setAccountType(type); setAccounts((prev) => prev.map((a) => ({ ...a, active: a.type === type && (type === "personal" ? a.email === "reem@gmail.com" : a.email === "burak@gmail.com") }))); navigate(type === "personal" ? "client-home" : "provider-dashboard"); }} onSignup={() => navigate("signup")} onForgot={() => navigate("forgot-password")} accounts={accounts} onGuest={() => { setIsGuest(true); setAccountType("personal"); navigate("client-home"); }} />}
+          {/* Guest registration modal */}
+          {showGuestModal && (
+            <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ background: "rgba(27,19,36,0.55)", backdropFilter: "blur(4px)" }}>
+              <div className="w-full max-w-md bg-card rounded-t-3xl p-6 pb-10" style={{ boxShadow: "0 -8px 40px rgba(107,33,168,0.18)" }}>
+                <div className="w-10 h-1 rounded-full bg-border mx-auto mb-6" />
+                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mx-auto mb-4">
+                  <svg width="32" height="32" viewBox="0 0 989.1 1105.2">
+                    <path fill="#6B21A8" d="M.3,612.5l-.3-60.4,1.2-9c6-72.7,23.8-143.9,53.8-210.5,48-106.5,126.3-196.7,225.7-258C348.1,33.2,423.8,7.9,502.5.8l8.6-.8,39.9.3c38.8,2.5,76,13,109.5,32.2,55.9,32.2,93.3,87.3,101.9,151.3,13,96.2-32.9,180.6-103.2,243.6-24.3,21.7-50.6,41.1-78.7,57.7-117.8,69.7-250.5,109.5-387.1,116.8s-26.4,0-39.7-1.8c-18.9-2.5-28.9-23.6-24.8-41.8,2.3-10.2,9.4-17.5,18.9-21.4,8.3-3.4,16.4-3.4,25.5-3.3,104.5,1.3,212.1-29.6,306.2-74.3,72.4-34.4,152.4-86.4,191.1-158,22.5-41.6,30.8-90.2,15.3-135.4-11.4-33.1-34.5-60.1-65.5-76.5-39.7-21-83.4-23.3-127.8-17.4-112.4,15.1-213.2,73.8-287.2,158.9-44.3,51-79,109.6-102.7,172.9-34.9,93.2-42.7,194.3-18.1,290.9,19.6,76.9,60.4,144.4,124.2,191.9,53.3,39.6,118.8,58.7,185.1,59.4,53.9.6,106.6-10.9,155.8-32.7,84.8-37.5,153.7-95.2,209.4-168.7,3.2-4.2,9.1-4.6,13.3-2.7,10.6,4.8,4.4,26.9-1.1,39.7-11,25.5-25.1,49.8-42.9,71.4-77.2,93.4-190.6,151.2-311.7,159-39.4,2.5-78.6-.5-116.7-9.3-115.5-26.6-210.8-105.8-257.8-214.6C18.2,732.4,4.8,672.7.3,612.5Z"/>
+                    <path fill="#F8CD42" d="M489,1105.1h-11.1c-5.8-1.3-11.2-2.9-16.2-6.2-8.9-5.9-13.4-15.7-12.7-26.5s.9-12.2,4.3-17.4c5.8-8.7,15.9-13,26.5-12.4,106.8,6.6,210.5-30.3,289.7-102.3,85.3-78.9,142-186.3,153.4-303.3-91-17.4-185.8-2.5-263.8,46.6-34.5,22.1-64.4,49.8-87.8,83.4-12.7,18.2-22.4,37.2-31.7,57.3l-21.2,53.1c-2.8,7.1-7.5,13.2-14,17.1-9.5,5.7-20.9,4.9-30-1.3s-13.9-15.4-11.9-26.2c10.6-58.1,35.8-112,72.1-158.4,43-54.9,99.6-94.3,165.1-118,39.1-14.1,79.2-22.7,120.9-25.9,54.2-4.1,107.6,3.3,158.2,22.1,4.5,1.7,9.3,6,9.9,10.3.8,6.1.3,12.2,0,18l-.5,11.4c-9.7,170.4-101,332.5-250.1,418.4-60,34.6-126.4,54.1-195.5,59l-53.6,1Z"/>
+                  </svg>
+                </div>
+                <h2 className="text-xl font-bold text-foreground text-center mb-2">Create an account to book</h2>
+                <p className="text-sm text-muted-foreground text-center mb-6 leading-relaxed">You're browsing as a guest. Sign up or sign in to book appointments, manage bookings, and unlock exclusive offers.</p>
+                <button onClick={() => { setShowGuestModal(false); setIsGuest(false); navigate("signup"); }} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-base mb-3 hover:opacity-90 transition-opacity">Create Account</button>
+                <button onClick={() => { setShowGuestModal(false); setIsGuest(false); navigate("login"); }} className="w-full py-4 rounded-2xl border border-primary text-primary font-bold text-base mb-3 hover:bg-primary/5 transition-colors">Sign In</button>
+                <button onClick={() => setShowGuestModal(false)} className="w-full py-3 text-sm text-muted-foreground font-semibold">Continue as Guest</button>
+              </div>
+            </div>
+          )}
           {view === "signup" && <SignupScreen signupType={signupType} setSignupType={setSignupType} onComplete={(name, email, phone, type) => { const newAcc: Account = { id: `acc-${Date.now()}`, name, email, phone, type, avatar: name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase(), active: true }; setAccounts((prev) => [...prev.map((a) => ({ ...a, active: false })), newAcc]); setAccountType(type); navigate(type === "personal" ? "client-home" : "provider-dashboard"); }} onBack={goBack} />}
           {view === "forgot-password" && <ForgotPasswordPage onBack={goBack} />}
-          {view === "client-home" && <ClientHome gender={gender} setGender={setGender} onCategory={(cat) => { setSelectedCategory(cat); navigate("category-results"); }} onSearch={() => navigate("search-results")} onProvider={openProvider} onOfferBook={openOfferBooking} accountName={activeAccount.name} />}
+          {view === "client-home" && <ClientHome gender={gender} setGender={setGender} onCategory={(cat) => { setSelectedCategory(cat); navigate("category-results"); }} onSearch={() => navigate("search-results")} onProvider={openProvider} onOfferBook={openOfferBooking} accountName={isGuest ? "Guest" : activeAccount.name} />}
           {view === "search-results" && <SearchResults onProvider={openProvider} favorites={favorites} />}
           {view === "category-results" && selectedCategory && <CategoryResults category={selectedCategory} gender={gender} onProvider={openProvider} />}
-          {view === "provider-profile" && selectedProvider && <ProviderProfile provider={selectedProvider} favorites={favorites} onToggleFavorite={toggleFavorite} onBook={() => navigate("booking-flow")} userReviews={userReviews.filter((r) => r.providerId === selectedProvider.id)} onAddReview={addReview} />}
+          {view === "provider-profile" && selectedProvider && <ProviderProfile provider={selectedProvider} favorites={favorites} onToggleFavorite={toggleFavorite} onBook={() => isGuest ? handleGuestBook() : navigate("booking-flow")} userReviews={userReviews.filter((r) => r.providerId === selectedProvider.id)} onAddReview={addReview} />}
           {view === "booking-flow" && selectedProvider && <BookingFlow provider={selectedProvider} accountType={accountType} days={days} selectedDate={selectedDate} setSelectedDate={setSelectedDate} selectedTime={selectedTime} setSelectedTime={setSelectedTime} bookedSlots={personalBookedSlots} onConfirm={confirmBooking} />}
           {view === "my-appointments" && <MyAppointments bookingRequests={bookingRequests} onSearch={() => navigate("search-results")} onProvider={openProvider} onCancelRequest={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "cancelled" } : r))} onAddReview={addReview} />}
           {view === "business-bookings" && <BusinessBookings bookingRequests={bookingRequests} onAccept={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "confirmed" } : r))} onReject={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "rejected" } : r))} />}
@@ -290,7 +313,7 @@ export default function App() {
           {view === "provider-calendar" && <ProviderCalendar accountType={accountType} bookingRequests={bookingRequests} onProvider={openProvider} />}
           {view === "service-setup" && <ServiceSetup services={services} setServices={setServices} />}
           {view === "business-profile" && <BusinessProfileEditor />}
-          {view === "settings" && <SettingsScreen accounts={accounts} activeAccount={activeAccount} accountType={accountType} onSwitchAccount={switchAccount} onAddAccount={() => navigate("login")} onEditAccount={() => navigate("edit-account")} onServiceSetup={() => navigate("service-setup")} onBusinessProfile={() => navigate("business-profile")} onPrivacy={() => navigate("privacy")} onAboutUs={() => navigate("about-us")} onGiftCards={() => navigate("gift-cards")} onInviteFriends={() => navigate("invite-friends")} onFavorites={() => navigate("favorites")} onRevenue={() => navigate("revenue-detail")} onLogout={() => { setView("splash"); setHistory([]); }} />}
+          {view === "settings" && <SettingsScreen accounts={accounts} activeAccount={activeAccount} accountType={accountType} onSwitchAccount={switchAccount} onAddAccount={() => navigate("login")} onEditAccount={() => navigate("edit-account")} onServiceSetup={() => navigate("service-setup")} onBusinessProfile={() => navigate("business-profile")} onPrivacy={() => navigate("privacy")} onAboutUs={() => navigate("about-us")} onGiftCards={() => navigate("gift-cards")} onInviteFriends={() => navigate("invite-friends")} onFavorites={() => navigate("favorites")} onRevenue={() => navigate("revenue-detail")} onLogout={() => { setIsGuest(false); setView("splash"); setHistory([]); }} />}
           {view === "edit-account" && <EditAccount account={activeAccount} onSave={(u) => { setAccounts((prev) => prev.map((a) => a.id === u.id ? u : a)); goBack(); }} />}
           {view === "privacy" && <PrivacyPage />}
           {view === "about-us" && <AboutUsPage />}
@@ -424,7 +447,7 @@ function SplashScreen({ onStart }: { onStart: () => void }) {
 }
 
 // ── Login (with validation + email keyboard) ──────────────────────────────────
-function LoginScreen({ email, setEmail, password, setPassword, accountType, setAccountType, onLogin, onSignup, onForgot, accounts }: { email: string; setEmail: (v: string) => void; password: string; setPassword: (v: string) => void; accountType: AccountType; setAccountType: (v: AccountType) => void; onLogin: (type: AccountType) => void; onSignup: () => void; onForgot: () => void; accounts: Account[] }) {
+function LoginScreen({ email, setEmail, password, setPassword, accountType, setAccountType, onLogin, onSignup, onForgot, onGuest, accounts }: { email: string; setEmail: (v: string) => void; password: string; setPassword: (v: string) => void; accountType: AccountType; setAccountType: (v: AccountType) => void; onLogin: (type: AccountType) => void; onSignup: () => void; onForgot: () => void; onGuest: () => void; accounts: Account[] }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   function submit() {
     const e: Record<string, string> = {};
@@ -432,8 +455,8 @@ function LoginScreen({ email, setEmail, password, setPassword, accountType, setA
     if (!password) e.password = "This field is required";
     if (!Object.keys(e).length) {
       const matched = accounts.find((a) => a.email.toLowerCase() === email.trim().toLowerCase());
-      if (!matched || password !== "1234") {
-        e.password = "Incorrect email or password";
+      if (!matched) {
+        e.email = "No account found with this email";
       } else if (matched.type !== accountType) {
         e.password = `This account is a ${matched.type} account. Please select the ${matched.type} tab.`;
       } else {
@@ -453,7 +476,7 @@ function LoginScreen({ email, setEmail, password, setPassword, accountType, setA
       <div className="flex flex-col gap-4 mb-2">
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Email or Phone</label>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="reem@gmail.com" type="text" inputMode="email" autoComplete="email" autoCapitalize="none" className={`w-full px-4 py-3.5 rounded-xl bg-muted border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm ${errors.email ? "border-destructive" : "border-border"}`} />
+          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email or phone" type="text" inputMode="email" autoComplete="email" autoCapitalize="none" className={`w-full px-4 py-3.5 rounded-xl bg-muted border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm ${errors.email ? "border-destructive" : "border-border"}`} />
           {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
         </div>
         <div>
@@ -463,7 +486,13 @@ function LoginScreen({ email, setEmail, password, setPassword, accountType, setA
         </div>
         <button onClick={onForgot} className="text-right text-xs text-primary font-semibold">Forgot password?</button>
       </div>
-      <button onClick={submit} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-opacity mb-4 mt-4">Sign In</button>
+      <button onClick={submit} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-opacity mb-3 mt-4">Sign In</button>
+      <div className="flex items-center gap-3 my-1">
+        <div className="flex-1 h-px bg-border" />
+        <span className="text-xs text-muted-foreground font-medium">or</span>
+        <div className="flex-1 h-px bg-border" />
+      </div>
+      <button onClick={onGuest} className="w-full py-4 rounded-2xl border border-border text-muted-foreground font-semibold text-base hover:border-primary/40 hover:text-primary transition-colors mt-1 mb-4">Continue as Guest</button>
       <p className="text-center text-sm text-muted-foreground">{"Don't have an account? "}<button onClick={onSignup} className="text-primary font-bold">Create one</button></p>
     </div>
   );
