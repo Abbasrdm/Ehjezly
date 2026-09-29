@@ -960,7 +960,7 @@ function MyAppointments({ bookingRequests, onSearch, onProvider, onCancelRequest
     { providerId: "ws1", providerName: "Noura Spa & Wellness", service: "Aromatherapy", date: "Sat, 7 Jun 2026", time: "3:00 PM", price: "18 KWD", status: "completed", location: "Kuwait City" },
     { providerId: "wbs3", providerName: "Glow Skin Studio", service: "Hydra Facial", date: "Fri, 30 May 2026", time: "10:00 AM", price: "35 KWD", status: "completed", location: "Rumaithiya" },
   ];
-  function openMap(location: string) { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location + ', Kuwait')}`, "_blank"); }
+  const mapUrl = (name: string, location?: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name}, ${location ?? ""}, Kuwait`)}`;
   const statusColor = (s: string) => s === "confirmed" ? "bg-primary/10 text-primary" : s === "pending" ? "bg-[#F8CD42]/20 text-amber-700" : s === "cancelled" || s === "rejected" ? "bg-destructive/10 text-destructive" : "bg-muted text-muted-foreground";
   return (
     <div className="flex flex-col px-5 pt-2 pb-4 gap-5">
@@ -976,7 +976,7 @@ function MyAppointments({ bookingRequests, onSearch, onProvider, onCancelRequest
             <div className="flex items-start justify-between mb-2"><div><button onClick={() => { const p = ALL_PROVIDERS.find((x) => x.id === req.providerId); if (p) onProvider(p); }} className="font-bold text-foreground text-sm text-left hover:text-primary transition-colors">{req.providerName}</button><p className="text-xs text-muted-foreground mt-0.5">{req.service}</p></div><span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColor(req.status)}`}>{req.status}</span></div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3"><span className="flex items-center gap-1"><CalendarDays size={11} />{req.date}</span><span className="flex items-center gap-1"><Clock size={11} />{req.time}</span><span className="ml-auto font-bold text-foreground">{req.price}</span></div>
             <div className="flex gap-2">
-              <button onClick={() => openMap(req.providerLocation)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-primary transition-colors"><Navigation size={12} />Open in Maps</button>
+              <a href={mapUrl(req.providerName, req.providerLocation)} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-primary transition-colors"><Navigation size={12} />Open in Maps</a>
               {req.status === "pending" && <button onClick={() => onCancelRequest(req.id)} className="flex-1 py-2 rounded-xl border border-destructive text-destructive text-xs font-semibold hover:bg-destructive/5 transition-colors">Cancel</button>}
             </div>
           </div>
@@ -993,7 +993,7 @@ function MyAppointments({ bookingRequests, onSearch, onProvider, onCancelRequest
             <div className="flex items-start justify-between mb-2"><div><button onClick={() => { const p = ALL_PROVIDERS.find((x) => x.id === item.providerId); if (p) onProvider(p); }} className="font-bold text-foreground text-sm text-left hover:text-primary transition-colors">{item.providerName}</button><p className="text-xs text-muted-foreground mt-0.5">{item.service}</p></div><span className="text-xs font-bold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">completed</span></div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3"><span className="flex items-center gap-1"><CalendarDays size={11} />{item.date}</span><span className="flex items-center gap-1"><Clock size={11} />{item.time}</span><span className="ml-auto font-bold text-foreground">{item.price}</span></div>
             <div className="flex gap-2">
-              <button onClick={() => openMap(item.location)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-primary transition-colors"><Navigation size={12} />Open in Maps</button>
+              <a href={mapUrl(item.providerName, item.location)} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-primary transition-colors"><Navigation size={12} />Open in Maps</a>
               <button onClick={() => setReviewTarget({ id: item.providerId, name: item.providerName })} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-primary/30 text-primary text-xs font-bold hover:bg-primary/5 transition-colors"><Star size={11} />Review</button>
             </div>
           </div>
@@ -1125,7 +1125,7 @@ function ProviderDashboard({ accountName, onCalendar, onRevenue }: { accountName
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{"Today's Schedule"}</h2>
           <button onClick={onCalendar} className="text-xs text-primary font-bold">Full calendar</button>
         </div>
-        <div className="flex flex-col gap-2">{SCHEDULE_BY_DAY[1].map((a) => <div key={a.id} className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3"><div className="flex flex-col items-end min-w-[52px]"><span className="text-xs font-bold text-primary">{a.time}:00</span><span className="text-[10px] text-muted-foreground">{a.duration}</span></div><div className="w-px h-8 bg-border flex-shrink-0" /><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-foreground">{a.client}</p><p className="text-xs text-muted-foreground">{a.service}</p></div></div>)}</div>
+        <div className="flex flex-col gap-2">{SCHEDULE_BY_DAY[1].map((a) => <div key={a.id} className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3"><div className="flex flex-col items-end min-w-[52px]"><span className="text-xs font-bold text-primary">{a.time}</span><span className="text-[10px] text-muted-foreground">{a.duration}</span></div><div className="w-px h-8 bg-border flex-shrink-0" /><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-foreground">{a.client}</p><p className="text-xs text-muted-foreground">{a.service}</p></div></div>)}</div>
       </div>
     </div>
   );
