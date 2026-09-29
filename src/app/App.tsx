@@ -821,7 +821,7 @@ function SearchResults({ onProvider, favorites }: { onProvider: (p: Provider) =>
           </div>
         ))}
         {filtered.length === 0 && <p className="text-center text-muted-foreground text-sm py-12">No providers match your search.</p>}
-      </div></> }
+      </div>
     </div>
   );
 }
