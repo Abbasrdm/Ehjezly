@@ -821,7 +821,7 @@ function SearchResults({ onProvider, favorites }: { onProvider: (p: Provider) =>
           </div>
         ))}
         {filtered.length === 0 && <p className="text-center text-muted-foreground text-sm py-12">No providers match your search.</p>}
-      </div></> }
+      </div>
     </div>
   );
 }
@@ -918,6 +918,7 @@ function BookingFlow({ provider, accountType, days, selectedDate, setSelectedDat
       </div>
     </div>
   );
+  }
   return (
     <div className="flex flex-col px-5 pt-2 pb-4 gap-6">
       <div><h1 className="text-2xl font-bold text-foreground">Select Date & Time</h1><p className="text-muted-foreground text-sm mt-0.5">{provider.name}</p></div>
