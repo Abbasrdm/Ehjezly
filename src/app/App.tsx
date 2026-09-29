@@ -1,17 +1,54 @@
 import { useState, useRef, useEffect } from "react";
-import { motion } from "motion/react";
 import {
   Home, CalendarDays, User, BookOpen, Search, ChevronLeft,
   Star, MapPin, Clock, Plus, ChevronRight, Check, Edit3,
-  TrendingUp, Users, DollarSign, X, LogOut, Bell, Shield,
+  Users, DollarSign, X, LogOut, Bell, Shield,
   Scissors, Sparkles, Flower2, Dumbbell, Brain, Tag,
   Heart, Gift, UserPlus, Info, Share2, Copy, Camera,
   Navigation, LayoutGrid, CalendarRange,
-  BarChart2, AlertCircle,
+  AlertCircle, BarChart2,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, BarChart, Bar,
 } from "recharts";
+
+// ── Task 10: CSS Keyframe Animations (injected once at startup) ───────────────
+const ANIM_CSS = `
+@keyframes t10-splash-blob { 0%,100%{border-radius:60% 40% 30% 70%/60% 30% 70% 40%;transform:translate(0,0)} 50%{border-radius:30% 60% 70% 40%/50% 60% 30% 60%;transform:translate(10px,-12px)} }
+@keyframes t10-blob2 { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-8px,10px) scale(1.06)} }
+@keyframes t10-progress { from{width:0} to{width:100%} }
+@keyframes t10-pulse { 0%,100%{opacity:.25} 50%{opacity:.75} }
+@keyframes t10-letter { from{opacity:0;filter:blur(5px);transform:translateY(6px)} to{opacity:1;filter:blur(0);transform:translateY(0)} }
+@keyframes t10-underline { from{transform:scaleX(0);opacity:0} to{transform:scaleX(1);opacity:1} }
+@keyframes t10-fade-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes t10-slide-in-right { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes t10-slide-out-left { from{transform:translateX(0);opacity:1} to{transform:translateX(-28%);opacity:0} }
+@keyframes t10-slide-in-left { from{transform:translateX(-28%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes t10-slide-out-right { from{transform:translateX(0);opacity:1} to{transform:translateX(100%);opacity:0} }
+@keyframes t10-nav-bounce { 0%{transform:translateY(0)} 38%{transform:translateY(-6px)} 70%{transform:translateY(-2px)} 100%{transform:translateY(0)} }
+@keyframes t10-shimmer { from{background-position:-200% 0} to{background-position:200% 0} }
+@keyframes t10-heart { 0%{transform:scale(1)} 30%{transform:scale(1.55)} 60%{transform:scale(.85)} 100%{transform:scale(1)} }
+@keyframes t10-badge { 0%{transform:scale(0) rotate(-10deg);opacity:0} 70%{transform:scale(1.18) rotate(2deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+@keyframes t10-ripple { from{transform:scale(0);opacity:.45} to{transform:scale(2.4);opacity:0} }
+@keyframes t10-confetti { from{transform:translateY(-16px) rotate(0deg);opacity:1} to{transform:translateY(320px) rotate(720deg);opacity:0} }
+@keyframes t10-success { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+@keyframes t10-spin { to{transform:rotate(360deg)} }
+@keyframes t10-dot-bounce { 0%,80%,100%{transform:scale(.6);opacity:.4} 40%{transform:scale(1);opacity:1} }
+@keyframes t10-toast-in { from{opacity:0;transform:translateX(-50%) translateY(18px) scale(.9)} to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)} }
+@keyframes t10-toast-out { from{opacity:1;transform:translateX(-50%) translateY(0) scale(1)} to{opacity:0;transform:translateX(-50%) translateY(18px) scale(.9)} }
+@keyframes t10-bar-fill { from{width:0} to{width:var(--bar-w,100%)} }
+@keyframes t10-chip { 0%{transform:scale(1)} 45%{transform:scale(.93)} 100%{transform:scale(1)} }
+@keyframes t10-result-in { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.t10-skeleton { background:linear-gradient(90deg,#e8dff0 25%,#f3edf8 50%,#e8dff0 75%);background-size:200% 100%;animation:t10-shimmer 1.4s ease-in-out infinite;border-radius:8px; }
+.t10-spin { animation:t10-spin .7s linear infinite; }
+.t10-dot1 { animation:t10-dot-bounce .9s ease-in-out infinite; }
+.t10-dot2 { animation:t10-dot-bounce .9s ease-in-out infinite .15s; }
+.t10-dot3 { animation:t10-dot-bounce .9s ease-in-out infinite .3s; }
+`;
+if (typeof document !== "undefined" && !document.getElementById("t10-styles")) {
+  const s = document.createElement("style"); s.id = "t10-styles"; s.textContent = ANIM_CSS; document.head.appendChild(s);
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type View =
@@ -22,7 +59,7 @@ type View =
   | "provider-dashboard" | "provider-calendar"
   | "service-setup" | "business-profile"
   | "settings" | "edit-account" | "privacy" | "about-us"
-  | "gift-cards" | "invite-friends" | "favorites" | "revenue-detail";
+  | "gift-cards" | "invite-friends" | "favorites" | "revenue-detail" | "payment-card";
 
 type AccountType = "personal" | "business";
 type Gender = "women" | "men";
@@ -108,17 +145,6 @@ const NOW = new Date();
 const DAY_NAMES_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 const TODAY_IDX = NOW.getDay();
-
-const REVENUE_DATA = [
-  { day: "Sun", revenue: 140, dayIdx: 0 },
-  { day: "Mon", revenue: 85, dayIdx: 1 },
-  { day: "Tue", revenue: 120, dayIdx: 2 },
-  { day: "Wed", revenue: 95, dayIdx: 3 },
-  { day: "Thu", revenue: 160, dayIdx: 4 },
-  { day: "Fri", revenue: 210, dayIdx: 5 },
-  { day: "Sat", revenue: 185, dayIdx: 6 },
-];
-const TODAY_REVENUE = REVENUE_DATA.find((d) => d.dayIdx === TODAY_IDX)?.revenue ?? 140;
 
 const TIME_SLOTS = ["9:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "2:00 PM", "3:00 PM", "4:00 PM", "5:00 PM"];
 
@@ -206,8 +232,12 @@ export default function App() {
   const [showNotifPopup, setShowNotifPopup] = useState(false);
   const [bookingRequests, setBookingRequests] = useState<BookingRequest[]>([]);
   const [userReviews, setUserReviews] = useState<UserReview[]>([]);
-  const [revenueDetailDay, setRevenueDetailDay] = useState<string>("Fri");
   const [services, setServices] = useState<ServiceItem[]>(INIT_SERVICES);
+  const [revenueDetailDay, setRevenueDetailDay] = useState<string>("Fri");
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastTimer, setToastTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const [giftPayAmt, setGiftPayAmt] = useState<number>(20);
+  const [giftPayRecipient, setGiftPayRecipient] = useState<string>("");
 
   const isAuthenticated = view !== "splash" && view !== "login" && view !== "signup" && view !== "forgot-password";
   // Guest tries to book — intercept and show modal
@@ -232,12 +262,20 @@ export default function App() {
     if (v === "settings") setActiveTab("profile");
     setShowNotifPopup(false);
   }
+  function showToast(msg: string) {
+    setToastMsg(msg);
+    if (toastTimer) clearTimeout(toastTimer);
+    const t = setTimeout(() => setToastMsg(null), 2800);
+    setToastTimer(t);
+  }
+
   function goBack() { const prev = history[history.length - 1]; if (prev) { setHistory((h) => h.slice(0, -1)); setView(prev); } }
   function openProvider(p: Provider) { setSelectedProvider(p); navigate("provider-profile"); }
   function openOfferBooking(providerId: string) { if (isGuest) { handleGuestBook(); return; } const p = ALL_PROVIDERS.find((x) => x.id === providerId); if (!p) return; setSelectedProvider(p); navigate("booking-flow"); }
   function toggleFavorite(id: string) { setFavorites((prev) => prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]); }
   function switchAccount(id: string) { const acc = accounts.find((a) => a.id === id); if (!acc || acc.active) return; setAccounts((prev) => prev.map((a) => ({ ...a, active: a.id === id }))); setAccountType(acc.type); navigate(acc.type === "personal" ? "client-home" : "provider-dashboard"); }
   function confirmBooking() {
+    showToast("✅ Booking confirmed!");
     if (!selectedProvider || !selectedTime) return;
     const dayData = days[selectedDate];
     setBookingRequests((prev) => [...prev, { id: `req-${Date.now()}`, providerId: selectedProvider.id, providerName: selectedProvider.name, providerLocation: selectedProvider.location, service: selectedProvider.services[0]?.name ?? "", date: `${dayData.label}, ${dayData.date} ${MONTH_NAMES[dayData.month].slice(0, 3)} ${dayData.year}`, dateIdx: dayData.dayIdx, time: selectedTime, price: selectedProvider.services[0]?.price ?? "", status: "pending" }]);
@@ -278,7 +316,7 @@ export default function App() {
           </div>
         )}
 
-        <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.22 }} className="flex-1 overflow-y-auto pb-24" style={{ scrollbarWidth: "none" }} onClick={() => showNotifPopup && setShowNotifPopup(false)}>
+        <div key={view} className="flex-1 overflow-y-auto pb-24" style={{ scrollbarWidth: "none", animation: "t10-slide-in-right .28s cubic-bezier(.16,1,.3,1)" }} onClick={() => showNotifPopup && setShowNotifPopup(false)}>
           {view === "splash" && <SplashScreen onStart={() => navigate("login")} />}
           {view === "login" && <LoginScreen email={loginEmail} setEmail={setLoginEmail} password={loginPassword} setPassword={setLoginPassword} accountType={accountType} setAccountType={setAccountType} onLogin={(type) => { setIsGuest(false); setAccountType(type); setAccounts((prev) => prev.map((a) => ({ ...a, active: a.type === type && (type === "personal" ? a.email === "reem@gmail.com" : a.email === "burak@gmail.com") }))); navigate(type === "personal" ? "client-home" : "provider-dashboard"); }} onSignup={() => navigate("signup")} onForgot={() => navigate("forgot-password")} accounts={accounts} onGuest={() => { setIsGuest(true); setAccountType("personal"); navigate("client-home"); }} />}
           {/* Guest registration modal */}
@@ -309,7 +347,9 @@ export default function App() {
           {view === "booking-flow" && selectedProvider && <BookingFlow provider={selectedProvider} accountType={accountType} days={days} selectedDate={selectedDate} setSelectedDate={setSelectedDate} selectedTime={selectedTime} setSelectedTime={setSelectedTime} bookedSlots={personalBookedSlots} onConfirm={confirmBooking} />}
           {view === "my-appointments" && <MyAppointments bookingRequests={bookingRequests} onSearch={() => navigate("search-results")} onProvider={openProvider} onCancelRequest={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "cancelled" } : r))} onAddReview={addReview} />}
           {view === "business-bookings" && <BusinessBookings bookingRequests={bookingRequests} onAccept={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "confirmed" } : r))} onReject={(id) => setBookingRequests((prev) => prev.map((r) => r.id === id ? { ...r, status: "rejected" } : r))} />}
-          {view === "provider-dashboard" && <ProviderDashboard accountName={activeAccount.name} onCalendar={() => navigate("provider-calendar")} onRevenueDay={(day) => { setRevenueDetailDay(day); navigate("revenue-detail"); }} />}
+          {view === "provider-dashboard" && <ProviderDashboard accountName={activeAccount.name} onCalendar={() => navigate("provider-calendar")} onRevenue={() => navigate("revenue-detail")} />}
+          {view === "revenue-detail" && <RevenueDetailPage onBack={goBack} selectedDay={revenueDetailDay} onDaySelect={setRevenueDetailDay} />}
+          {view === "payment-card" && <PaymentCardScreen amount={giftPayAmt} recipient={giftPayRecipient} onBack={goBack} onSuccess={() => navigate("gift-cards")} />}
           {view === "provider-calendar" && <ProviderCalendar accountType={accountType} bookingRequests={bookingRequests} onProvider={openProvider} />}
           {view === "service-setup" && <ServiceSetup services={services} setServices={setServices} />}
           {view === "business-profile" && <BusinessProfileEditor />}
@@ -317,11 +357,10 @@ export default function App() {
           {view === "edit-account" && <EditAccount account={activeAccount} onSave={(u) => { setAccounts((prev) => prev.map((a) => a.id === u.id ? u : a)); goBack(); }} />}
           {view === "privacy" && <PrivacyPage />}
           {view === "about-us" && <AboutUsPage />}
-          {view === "gift-cards" && <GiftCardsPage />}
+          {view === "gift-cards" && <GiftCardsPage onPay={(amt, rec) => { setGiftPayAmt(amt); setGiftPayRecipient(rec); navigate("payment-card"); }} />}
           {view === "invite-friends" && <InviteFriendsPage />}
           {view === "favorites" && <FavoritesPage favorites={favorites} onProvider={openProvider} onToggleFavorite={toggleFavorite} />}
-          {view === "revenue-detail" && <RevenueDetailPage selectedDay={revenueDetailDay} onBack={goBack} onDaySelect={setRevenueDetailDay} />}
-        </motion.div>
+        </div>
 
         {isAuthenticated && <div className="absolute bottom-0 left-0 right-0 z-40"><BottomNav activeTab={activeTab} onTab={(tab) => { setActiveTab(tab); if (tab === "home") navigate(accountType === "personal" ? "client-home" : "provider-dashboard"); if (tab === "bookings") navigate(accountType === "personal" ? "my-appointments" : "business-bookings"); if (tab === "calendar") navigate("provider-calendar"); if (tab === "profile") navigate("settings"); }} /></div>}
       </div>
@@ -331,212 +370,265 @@ export default function App() {
 
 // ── Splash — logo only, auto-transitions to login after 3 s ──────────────────
 function SplashScreen({ onStart }: { onStart: () => void }) {
-  const [exiting, setExiting] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setExiting(true);
-      setTimeout(onStart, 600);
-    }, 3000);
-    return () => clearTimeout(t);
-  }, []);
-
+  // Auto-advance after 3.5s
+  useEffect(() => { const t = setTimeout(onStart, 3500); return () => clearTimeout(t); }, [onStart]);
+  const letters = "Ehjezly".split("");
   return (
-    <motion.div
-      className="flex min-h-screen flex-col items-center justify-center relative overflow-hidden"
-      style={{ backgroundColor: "#1B1324" }}
-      animate={{ opacity: exiting ? 0 : 1 }}
-      transition={{ duration: 0.6 }}
-    >
-      {/* Background glow blobs */}
-      <motion.div
-        className="absolute rounded-full"
-        style={{ width: 340, height: 340, background: "radial-gradient(circle, rgba(107,33,168,0.45) 0%, transparent 70%)", top: -60, right: -80 }}
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.4, ease: "easeOut" }}
-      />
-      <motion.div
-        className="absolute rounded-full"
-        style={{ width: 260, height: 260, background: "radial-gradient(circle, rgba(248,205,66,0.18) 0%, transparent 70%)", bottom: 80, left: -60 }}
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1.6, delay: 0.3, ease: "easeOut" }}
-      />
-      <motion.div
-        className="absolute rounded-full"
-        style={{ width: 180, height: 180, background: "radial-gradient(circle, rgba(157,78,221,0.3) 0%, transparent 70%)", bottom: 200, right: 20 }}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.2, delay: 0.5 }}
-      />
-
-      {/* Center content */}
-      <div className="flex flex-col items-center gap-6 relative z-10 px-8">
-        {/* Logo mark — SVG inline, animates in first */}
-        <motion.svg
-          viewBox="0 0 989.1 1105.2"
-          style={{ width: 100, height: 100 }}
-          initial={{ opacity: 0, scale: 0.5, rotate: -15 }}
-          animate={{ opacity: 1, scale: 1, rotate: 0 }}
-          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <path fill="#9D4EDD" d="M.3,612.5l-.3-60.4,1.2-9c6-72.7,23.8-143.9,53.8-210.5,48-106.5,126.3-196.7,225.7-258C348.1,33.2,423.8,7.9,502.5.8l8.6-.8,39.9.3c38.8,2.5,76,13,109.5,32.2,55.9,32.2,93.3,87.3,101.9,151.3,13,96.2-32.9,180.6-103.2,243.6-24.3,21.7-50.6,41.1-78.7,57.7-117.8,69.7-250.5,109.5-387.1,116.8s-26.4,0-39.7-1.8c-18.9-2.5-28.9-23.6-24.8-41.8,2.3-10.2,9.4-17.5,18.9-21.4,8.3-3.4,16.4-3.4,25.5-3.3,104.5,1.3,212.1-29.6,306.2-74.3,72.4-34.4,152.4-86.4,191.1-158,22.5-41.6,30.8-90.2,15.3-135.4-11.4-33.1-34.5-60.1-65.5-76.5-39.7-21-83.4-23.3-127.8-17.4-112.4,15.1-213.2,73.8-287.2,158.9-44.3,51-79,109.6-102.7,172.9-34.9,93.2-42.7,194.3-18.1,290.9,19.6,76.9,60.4,144.4,124.2,191.9,53.3,39.6,118.8,58.7,185.1,59.4,53.9.6,106.6-10.9,155.8-32.7,84.8-37.5,153.7-95.2,209.4-168.7,3.2-4.2,9.1-4.6,13.3-2.7,10.6,4.8,4.4,26.9-1.1,39.7-11,25.5-25.1,49.8-42.9,71.4-77.2,93.4-190.6,151.2-311.7,159-39.4,2.5-78.6-.5-116.7-9.3-115.5-26.6-210.8-105.8-257.8-214.6C18.2,732.4,4.8,672.7.3,612.5Z"/>
-          <path fill="#F8CD42" d="M489,1105.1h-11.1c-5.8-1.3-11.2-2.9-16.2-6.2-8.9-5.9-13.4-15.7-12.7-26.5s.9-12.2,4.3-17.4c5.8-8.7,15.9-13,26.5-12.4,106.8,6.6,210.5-30.3,289.7-102.3,85.3-78.9,142-186.3,153.4-303.3-91-17.4-185.8-2.5-263.8,46.6-34.5,22.1-64.4,49.8-87.8,83.4-12.7,18.2-22.4,37.2-31.7,57.3l-21.2,53.1c-2.8,7.1-7.5,13.2-14,17.1-9.5,5.7-20.9,4.9-30-1.3s-13.9-15.4-11.9-26.2c10.6-58.1,35.8-112,72.1-158.4,43-54.9,99.6-94.3,165.1-118,39.1-14.1,79.2-22.7,120.9-25.9,54.2-4.1,107.6,3.3,158.2,22.1,4.5,1.7,9.3,6,9.9,10.3.8,6.1.3,12.2,0,18l-.5,11.4c-9.7,170.4-101,332.5-250.1,418.4-60,34.6-126.4,54.1-195.5,59l-53.6,1Z"/>
-        </motion.svg>
-        {/* Wordmark — letters animate in one by one */}
-        <div className="flex flex-col items-center gap-2">
-          <div style={{ display: "flex", fontFamily: "tgl30sansserifthinMed, Josefin Sans, sans-serif", fontWeight: 500, fontSize: "4.2rem", letterSpacing: "0.1em", lineHeight: 1, color: "#F3EDF8" }}>
-            {"Ehjezly".split("").map((char, i) => (
-              <motion.span
-                key={i}
-                initial={{ opacity: 0, y: 24, filter: "blur(8px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ delay: 0.6 + i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              >
-                {char}
-              </motion.span>
-            ))}
-          </div>
-          {/* Animated underline */}
-          <motion.div
-            className="h-px origin-center"
-            style={{ width: "6rem", background: "linear-gradient(90deg, transparent, #F8CD42, transparent)" }}
-            initial={{ scaleX: 0, opacity: 0 }}
-            animate={{ scaleX: 1, opacity: 1 }}
-            transition={{ delay: 1.25, duration: 0.7, ease: "easeOut" }}
-          />
+    <div style={{ background: "#1B1324", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
+      {/* Anim 8 — Background morphing blobs */}
+      <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "60% 40% 30% 70%/60% 30% 70% 40%", background: "radial-gradient(circle, rgba(107,33,168,.55) 0%, transparent 70%)", top: -40, left: -40, filter: "blur(32px)", animation: "t10-splash-blob 6s ease-in-out infinite" }} />
+      <div style={{ position: "absolute", width: 160, height: 160, background: "radial-gradient(circle, rgba(157,78,221,.45) 0%, transparent 70%)", bottom: -20, right: -20, filter: "blur(28px)", animation: "t10-blob2 7s ease-in-out infinite reverse" }} />
+      <div style={{ position: "absolute", inset: 0, backgroundImage: "linear-gradient(rgba(107,33,168,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(107,33,168,.05) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+      {/* Anim 1 — Logo entrance */}
+      <div style={{ position: "relative", zIndex: 2, textAlign: "center" }}>
+        <div style={{ animation: "t10-fade-in .6s cubic-bezier(.16,1,.3,1) .4s both" }}>
+          <svg width="72" height="72" viewBox="0 0 989.1 1105.2">
+            <path fill="#6B21A8" d="M.3,612.5l-.3-60.4,1.2-9c6-72.7,23.8-143.9,53.8-210.5,48-106.5,126.3-196.7,225.7-258C348.1,33.2,423.8,7.9,502.5.8l8.6-.8,39.9.3c38.8,2.5,76,13,109.5,32.2,55.9,32.2,93.3,87.3,101.9,151.3,13,96.2-32.9,180.6-103.2,243.6-24.3,21.7-50.6,41.1-78.7,57.7-117.8,69.7-250.5,109.5-387.1,116.8s-26.4,0-39.7-1.8c-18.9-2.5-28.9-23.6-24.8-41.8,2.3-10.2,9.4-17.5,18.9-21.4,8.3-3.4,16.4-3.4,25.5-3.3,104.5,1.3,212.1-29.6,306.2-74.3,72.4-34.4,152.4-86.4,191.1-158,22.5-41.6,30.8-90.2,15.3-135.4-11.4-33.1-34.5-60.1-65.5-76.5-39.7-21-83.4-23.3-127.8-17.4-112.4,15.1-213.2,73.8-287.2,158.9-44.3,51-79,109.6-102.7,172.9-34.9,93.2-42.7,194.3-18.1,290.9,19.6,76.9,60.4,144.4,124.2,191.9,53.3,39.6,118.8,58.7,185.1,59.4,53.9.6,106.6-10.9,155.8-32.7,84.8-37.5,153.7-95.2,209.4-168.7,3.2-4.2,9.1-4.6,13.3-2.7,10.6,4.8,4.4,26.9-1.1,39.7-11,25.5-25.1,49.8-42.9,71.4-77.2,93.4-190.6,151.2-311.7,159-39.4,2.5-78.6-.5-116.7-9.3-115.5-26.6-210.8-105.8-257.8-214.6C18.2,732.4,4.8,672.7.3,612.5Z"/>
+            <path fill="#F8CD42" d="M489,1105.1h-11.1c-5.8-1.3-11.2-2.9-16.2-6.2-8.9-5.9-13.4-15.7-12.7-26.5s.9-12.2,4.3-17.4c5.8-8.7,15.9-13,26.5-12.4,106.8,6.6,210.5-30.3,289.7-102.3,85.3-78.9,142-186.3,153.4-303.3-91-17.4-185.8-2.5-263.8,46.6-34.5,22.1-64.4,49.8-87.8,83.4-12.7,18.2-22.4,37.2-31.7,57.3l-21.2,53.1c-2.8,7.1-7.5,13.2-14,17.1-9.5,5.7-20.9,4.9-30-1.3s-13.9-15.4-11.9-26.2c10.6-58.1,35.8-112,72.1-158.4,43-54.9,99.6-94.3,165.1-118,39.1-14.1,79.2-22.7,120.9-25.9,54.2-4.1,107.6,3.3,158.2,22.1,4.5,1.7,9.3,6,9.9,10.3.8,6.1.3,12.2,0,18l-.5,11.4c-9.7,170.4-101,332.5-250.1,418.4-60,34.6-126.4,54.1-195.5,59l-53.6,1Z"/>
+          </svg>
         </div>
-
-        {/* Tagline */}
-        <motion.p
-          className="text-xs tracking-[0.3em] uppercase"
-          style={{ color: "rgba(243,237,248,0.45)", fontFamily: "Inter, sans-serif", letterSpacing: "0.25em" }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.8 }}
-        >
-          Beauty &amp; Wellness · Kuwait
-        </motion.p>
-
-        {/* Pill badges */}
-        <motion.div
-          className="flex gap-3 mt-2"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.2, duration: 0.6 }}
-        >
-          {["Salons", "Spas", "Trainers", "Therapy"].map((label) => (
-            <span
-              key={label}
-              className="px-3 py-1 rounded-full text-[10px] font-semibold"
-              style={{ background: "rgba(107,33,168,0.25)", color: "rgba(243,237,248,0.7)", border: "1px solid rgba(107,33,168,0.4)", fontFamily: "Inter, sans-serif" }}
-            >
-              {label}
-            </span>
+        {/* Anim 1 — letter-by-letter wordmark */}
+        <div style={{ display: "flex", justifyContent: "center", gap: 1, marginTop: 12, fontFamily: "'Josefin Sans', sans-serif", fontSize: 30, fontWeight: 500, letterSpacing: "0.1em", color: "#fff" }}>
+          {letters.map((l, i) => (
+            <span key={i} style={{ animation: `t10-letter .4s ease ${0.6 + i * 0.08}s both`, opacity: 0 }}>{l}</span>
           ))}
-        </motion.div>
+        </div>
+        {/* Anim 1 — gold underline sweep */}
+        <div style={{ height: 2, width: 96, background: "linear-gradient(90deg, transparent, #F8CD42, transparent)", transformOrigin: "center", margin: "8px auto", animation: "t10-underline .7s ease-out 1.4s both", transform: "scaleX(0)", opacity: 0 }} />
+        <p style={{ color: "rgba(255,255,255,.35)", fontSize: 9, letterSpacing: "0.22em", textTransform: "uppercase", animation: "t10-fade-in .5s ease .7s both", opacity: 0 }}>BEAUTY &amp; WELLNESS · KUWAIT</p>
+        {/* Anim 7 — progress bar loader */}
+        <div style={{ width: 120, height: 3, background: "rgba(107,33,168,.25)", borderRadius: 2, overflow: "hidden", margin: "28px auto 0", animation: "t10-fade-in .4s ease 1.6s both", opacity: 0 }}>
+          <div style={{ height: "100%", background: "linear-gradient(90deg, #6B21A8, #F8CD42)", borderRadius: 2, animation: "t10-progress 1.6s cubic-bezier(.4,0,.2,1) 1.65s both" }} />
+        </div>
+        <p style={{ fontSize: 9, letterSpacing: "0.2em", color: "rgba(255,255,255,.2)", textTransform: "uppercase", marginTop: 6, animation: "t10-pulse 1.5s ease infinite 1.8s both", opacity: 0 }}>LOADING</p>
       </div>
-
-      {/* Bottom loading dots */}
-      <motion.div
-        className="absolute bottom-16 flex gap-1.5"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.6, duration: 0.5 }}
-      >
-        {[0, 1, 2].map((i) => (
-          <motion.div
-            key={i}
-            className="w-1.5 h-1.5 rounded-full bg-primary"
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
-          />
-        ))}
-      </motion.div>
-    </motion.div>
+    </div>
   );
 }
 
 // ── Login (with validation + email keyboard) ──────────────────────────────────
+// ── Password strength helper (Task 9) ────────────────────────────────────────
+function pwStrengthCalc(pw: string): { level: number; label: string; color: string } {
+  let s = 0;
+  if (pw.length >= 8) s++;
+  if (/[A-Z]/.test(pw)) s++;
+  if (/[0-9]/.test(pw)) s++;
+  if (/[^A-Za-z0-9]/.test(pw)) s++;
+  const levels = [
+    { level: 0, label: "", color: "" },
+    { level: 1, label: "Weak", color: "#D4183D" },
+    { level: 2, label: "Fair", color: "#F97316" },
+    { level: 3, label: "Good", color: "#F8CD42" },
+    { level: 4, label: "Strong", color: "#16A34A" },
+  ];
+  return levels[s] ?? levels[0];
+}
+
+// ── Login (Task 9: show/hide pw, inline validation icons, shake on error) ────
 function LoginScreen({ email, setEmail, password, setPassword, accountType, setAccountType, onLogin, onSignup, onForgot, onGuest, accounts }: { email: string; setEmail: (v: string) => void; password: string; setPassword: (v: string) => void; accountType: AccountType; setAccountType: (v: AccountType) => void; onLogin: (type: AccountType) => void; onSignup: () => void; onForgot: () => void; onGuest: () => void; accounts: Account[] }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showPw, setShowPw] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const emailOk = email.includes("@") && email.includes(".");
+  const pwOk = password.length >= 4;
+
   function submit() {
+    setTouched({ email: true, password: true });
     const e: Record<string, string> = {};
     if (!email.trim()) e.email = "This field is required";
-    else if (!email.includes("@")) e.email = "Please enter a valid email address";
+    else if (!emailOk) e.email = "Please enter a valid email address";
     if (!password) e.password = "This field is required";
-    else if (password.length < 4) e.password = "Password must be at least 4 characters";
-    if (!Object.keys(e).length) { onLogin(accountType); return; }
-    setErrors(e);
+    else if (!pwOk) e.password = "Password must be at least 4 characters";
+    if (Object.keys(e).length) { setErrors(e); return; }
+    setErrors({});
+    onLogin(accountType);
   }
+
   return (
-    <div className="flex flex-col min-h-screen px-6 pt-16 pb-8">
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: "Inter, sans-serif", fontStyle: "normal" }}>Welcome back</h1>
+    <div className="flex flex-col min-h-screen px-6 pt-14 pb-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-primary mb-1">Welcome back</h1>
         <p className="text-muted-foreground text-sm">Sign in to your account</p>
       </div>
-      <div className="flex gap-1 mb-8 bg-muted rounded-2xl p-1">{(["personal", "business"] as AccountType[]).map((t) => <button key={t} onClick={() => setAccountType(t)} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${accountType === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{t === "personal" ? "Personal" : "Business"}</button>)}</div>
+      <div className="flex gap-1 mb-6 bg-muted rounded-2xl p-1">
+        {(["personal", "business"] as AccountType[]).map((t) => (
+          <button key={t} onClick={() => setAccountType(t)} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${accountType === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>
+            {t === "personal" ? "Personal" : "Business"}
+          </button>
+        ))}
+      </div>
       <div className="flex flex-col gap-4 mb-2">
+        {/* Email — Input Prompt + inline validation icon */}
         <div>
           <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Email or Phone</label>
-          <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email or phone" type="text" inputMode="email" autoComplete="email" autoCapitalize="none" className={`w-full px-4 py-3.5 rounded-xl bg-muted border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm ${errors.email ? "border-destructive" : "border-border"}`} />
-          {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+          <div className="relative">
+            <input value={email} onChange={e => { setEmail(e.target.value); if (touched.email) setErrors(p => ({ ...p, email: "" })); }}
+              onBlur={() => setTouched(p => ({ ...p, email: true }))}
+              placeholder="reem@gmail.com" type="text" inputMode="email" autoComplete="email" autoCapitalize="none"
+              className={`w-full px-4 py-3.5 pr-10 rounded-xl bg-muted border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm transition-colors ${errors.email ? "border-destructive bg-destructive/5" : touched.email && emailOk ? "border-green-500" : "border-border"}`} />
+            {touched.email && (
+              <span
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm">{emailOk ? "✅" : "❌"}</span>
+            )}
+          </div>
+          {errors.email && <p className="text-xs text-destructive mt-1 flex items-center gap-1"><AlertCircle size={11} />{errors.email}</p>}
         </div>
+        {/* Password — show/hide toggle */}
         <div>
-          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className={`w-full px-4 py-3.5 rounded-xl bg-muted border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm ${errors.password ? "border-destructive" : "border-border"}`} />
-          {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Password</label>
+            <button onClick={onForgot} className="text-xs text-primary font-semibold">Forgot password?</button>
+          </div>
+          <div className="relative">
+            <input type={showPw ? "text" : "password"} value={password}
+              onChange={e => { setPassword(e.target.value); if (touched.password) setErrors(p => ({ ...p, password: "" })); }}
+              onBlur={() => setTouched(p => ({ ...p, password: true }))}
+              placeholder="••••••••"
+              className={`w-full px-4 py-3.5 pr-20 rounded-xl bg-muted border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm transition-colors ${errors.password ? "border-destructive bg-destructive/5" : touched.password && pwOk ? "border-green-500" : "border-border"}`} />
+            <button onClick={() => setShowPw(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-primary px-2 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors">
+              {showPw ? "Hide" : "Show"}
+            </button>
+          </div>
+          {errors.password && <p className="text-xs text-destructive mt-1 flex items-center gap-1"><AlertCircle size={11} />{errors.password}</p>}
         </div>
-        <button onClick={onForgot} className="text-right text-xs text-primary font-semibold">Forgot password?</button>
       </div>
-      <button onClick={submit} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-opacity mb-3 mt-4">Sign In</button>
-      <div className="flex items-center gap-3 my-1">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-xs text-muted-foreground font-medium">or</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
+      <button onClick={submit}
+        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-opacity mb-3 mt-4">
+        Sign In
+      </button>
+      <div className="flex items-center gap-3 my-1"><div className="flex-1 h-px bg-border" /><span className="text-xs text-muted-foreground font-medium">or</span><div className="flex-1 h-px bg-border" /></div>
       <button onClick={onGuest} className="w-full py-4 rounded-2xl border border-border text-muted-foreground font-semibold text-base hover:border-primary/40 hover:text-primary transition-colors mt-1 mb-4">Continue as Guest</button>
       <p className="text-center text-sm text-muted-foreground">{"Don't have an account? "}<button onClick={onSignup} className="text-primary font-bold">Create one</button></p>
     </div>
   );
 }
-
 // ── Signup (with validation) ──────────────────────────────────────────────────
+// ── Signup (Task 9: pw strength, field validation, terms checkbox) ───────────
 function SignupScreen({ signupType, setSignupType, onComplete, onBack }: { signupType: AccountType; setSignupType: (v: AccountType) => void; onComplete: (name: string, email: string, phone: string, type: AccountType) => void; onBack: () => void }) {
   const [vals, setVals] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const personalFields = [{ key: "name", label: "Full Name", placeholder: "Reem Al-Rashidi", type: "text" }, { key: "email", label: "Email", placeholder: "reem@gmail.com", type: "text", inputMode: "email" as React.HTMLAttributes<HTMLInputElement>["inputMode"] }, { key: "phone", label: "Phone", placeholder: "+965 9XXX XXXX", type: "tel" }, { key: "password", label: "Password", placeholder: "••••••••", type: "password" }];
-  const bizFields = [{ key: "bname", label: "Business Name", placeholder: "Al-Salam Beauty", type: "text" }, { key: "email", label: "Business Email", placeholder: "contact@business.kw", type: "text", inputMode: "email" as React.HTMLAttributes<HTMLInputElement>["inputMode"] }, { key: "phone", label: "Phone", placeholder: "+965 9XXX XXXX", type: "tel" }, { key: "category", label: "Category", placeholder: "Hair & Nails", type: "text" }, { key: "password", label: "Password", placeholder: "••••••••", type: "password" }];
+  const [showPw, setShowPw] = useState(false);
+  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [termsErr, setTermsErr] = useState(false);
+
+  const personalFields = [
+    { key: "name",     label: "Full Name",       placeholder: "Reem Al-Rashidi",       type: "text",     inputMode: undefined as React.HTMLAttributes<HTMLInputElement>["inputMode"] },
+    { key: "email",    label: "Email",            placeholder: "reem@gmail.com",        type: "text",     inputMode: "email"    as React.HTMLAttributes<HTMLInputElement>["inputMode"] },
+    { key: "phone",    label: "Phone (+965)",     placeholder: "9XXX XXXX",            type: "tel",      inputMode: "tel"      as React.HTMLAttributes<HTMLInputElement>["inputMode"] },
+    { key: "password", label: "Password",         placeholder: "Min. 8 characters",    type: "password", inputMode: undefined },
+  ];
+  const bizFields = [
+    { key: "bname",    label: "Business Name",    placeholder: "Al-Salam Beauty",      type: "text",     inputMode: undefined as React.HTMLAttributes<HTMLInputElement>["inputMode"] },
+    { key: "email",    label: "Business Email",   placeholder: "contact@business.kw",  type: "text",     inputMode: "email"    as React.HTMLAttributes<HTMLInputElement>["inputMode"] },
+    { key: "phone",    label: "Phone (+965)",     placeholder: "9XXX XXXX",            type: "tel",      inputMode: "tel"      as React.HTMLAttributes<HTMLInputElement>["inputMode"] },
+    { key: "category", label: "Category",         placeholder: "Hair & Nails",         type: "text",     inputMode: undefined },
+    { key: "password", label: "Password",         placeholder: "Min. 8 characters",    type: "password", inputMode: undefined },
+  ];
   const fields = signupType === "personal" ? personalFields : bizFields;
+  const pw = vals.password ?? "";
+  const strength = pwStrengthCalc(pw);
+
+  function validate(key: string, value: string) {
+    if (!value.trim()) return "This field is required";
+    if (key === "email" && (!value.includes("@") || !value.includes("."))) return "Enter a valid email address";
+    if (key === "phone" && value.replace(/\D/g,"").length < 8) return "Enter a valid 8-digit Kuwait number";
+    if (key === "password" && value.length < 8) return "Password must be at least 8 characters";
+    return "";
+  }
+
   function submit() {
     const e: Record<string, string> = {};
-    fields.forEach((f) => { if (!vals[f.key]?.trim()) e[f.key] = "Required"; });
+    fields.forEach(f => { const err = validate(f.key, vals[f.key] ?? ""); if (err) e[f.key] = err; });
     setErrors(e);
+    if (!agreedTerms) { setTermsErr(true); return; }
+    setTermsErr(false);
     if (!Object.keys(e).length) {
       const name = signupType === "personal" ? vals.name : vals.bname;
       onComplete(name, vals.email, vals.phone, signupType);
     }
   }
+
   return (
     <div className="flex flex-col min-h-screen px-6 pt-10 pb-8">
-      <button onClick={onBack} className="flex items-center gap-1 text-muted-foreground mb-8 self-start"><ChevronLeft size={18} /><span className="text-sm">Back</span></button>
-      <h1 className="text-4xl font-bold text-primary mb-1" style={{ fontFamily: "Inter, sans-serif", fontStyle: "normal" }}>Create account</h1>
-      <p className="text-muted-foreground text-sm mb-8">{"Join Kuwait's beauty marketplace"}</p>
-      <div className="flex gap-1 mb-6 bg-muted rounded-2xl p-1">{(["personal", "business"] as AccountType[]).map((t) => <button key={t} onClick={() => setSignupType(t)} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${signupType === t ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>{t === "personal" ? "Personal" : "Business"}</button>)}</div>
-      <div className="flex flex-col gap-3 mb-6">
-        {fields.map((f) => (
-          <div key={f.key}>
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 block">{f.label}</label>
-            <input type={f.type} inputMode={f.inputMode} value={vals[f.key] ?? ""} onChange={(e) => setVals((p) => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder} className={`w-full px-4 py-3.5 rounded-xl bg-muted border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm ${errors[f.key] ? "border-destructive" : "border-border"}`} />
-            {errors[f.key] && <p className="text-xs text-destructive mt-1">This field is required</p>}
+      <button onClick={onBack} className="flex items-center gap-1 text-muted-foreground mb-6 self-start"><ChevronLeft size={18} /><span className="text-sm">Back</span></button>
+      <div>
+        <h1 className="text-3xl font-bold text-primary mb-1">Create account</h1>
+        <p className="text-muted-foreground text-sm mb-5">{"Join Kuwait's beauty marketplace"}</p>
+      </div>
+      {/* Step indicator */}
+      <div className="flex items-center gap-0 mb-5">
+        {["Details","Verify","Done"].map((s,i) => (
+          <div key={s} className="flex items-center flex-1">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${i===0?"bg-primary text-primary-foreground":"bg-muted text-muted-foreground border border-border"}`}>{i+1}</div>
+            <div className="flex-1 mx-1"><div className={`h-0.5 rounded-full ${i===0?"bg-primary":"bg-border"}`} /></div>
           </div>
         ))}
       </div>
+      <div className="flex gap-1 mb-4 bg-muted rounded-2xl p-1">
+        {(["personal","business"] as AccountType[]).map(t => (
+          <button key={t} onClick={() => setSignupType(t)} className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${signupType===t?"bg-primary text-primary-foreground shadow-sm":"text-muted-foreground"}`}>
+            {t==="personal"?"Personal":"Business"}
+          </button>
+        ))}
+      </div>
+      <div className="flex flex-col gap-3 mb-4">
+        {fields.map((f, i) => {
+          const isPw = f.key === "password";
+          const val = vals[f.key] ?? "";
+          const err = errors[f.key];
+          const isOk = val.length > 0 && !err && !validate(f.key, val);
+          return (
+            <div key={f.key}>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{f.label}</label>
+                {isPw && <button onClick={() => setShowPw(v=>!v)} className="text-xs text-primary font-bold">{showPw?"Hide":"Show"}</button>}
+              </div>
+              <div className="relative">
+                <input
+                  type={isPw?(showPw?"text":"password"):f.type}
+                  inputMode={f.inputMode}
+                  value={val}
+                  onBlur={() => { const e=validate(f.key,val); setErrors(p=>({...p,[f.key]:e})); }}
+                  onChange={e => { setVals(p=>({...p,[f.key]:e.target.value})); if(errors[f.key]) setErrors(p=>({...p,[f.key]:""})); }}
+                  placeholder={f.placeholder}
+                  className={`w-full px-4 py-3.5 pr-10 rounded-xl bg-muted border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm transition-colors ${err?"border-destructive bg-destructive/5":isOk?"border-green-500":"border-border"}`}
+                />
+                {val.length>0 && !isPw && (
+                  <span
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sm pointer-events-none">
+                    {isOk?"✅":"❌"}
+                  </span>
+                )}
+              </div>
+              {/* Password strength bars */}
+              {isPw && pw.length>0 && (
+                <div className="mt-2">
+                  <div className="flex gap-1 mb-1">
+                    {[1,2,3,4].map(lvl => (
+                      <div key={lvl} className="flex-1 h-1.5 rounded-full" />
+                    ))}
+                  </div>
+                  {strength.level>0 && <p className="text-xs font-semibold" style={{ color:strength.color }}>{strength.label}</p>}
+                </div>
+              )}
+              {err && <p className="text-xs text-destructive mt-1 flex items-center gap-1"><AlertCircle size={11} />{err}</p>}
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={() => { setAgreedTerms(v=>!v); setTermsErr(false); }} className="flex items-start gap-3 mb-4 text-left">
+        <div className={`w-5 h-5 rounded flex-shrink-0 mt-0.5 flex items-center justify-center border-2 transition-colors ${agreedTerms?"bg-primary border-primary":termsErr?"border-destructive":"border-border"}`}>
+          {agreedTerms && <Check size={11} className="text-white" />}
+        </div>
+        <span className="text-sm text-muted-foreground leading-relaxed">I agree to the <span className="text-primary font-semibold">Terms of Service</span> and <span className="text-primary font-semibold">Privacy Policy</span></span>
+      </button>
+      {termsErr && <p className="text-xs text-destructive -mt-2 mb-3 flex items-center gap-1"><AlertCircle size={11} />You must accept the terms</p>}
       <button onClick={submit} className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-bold text-base hover:opacity-90 transition-opacity">Create Account</button>
     </div>
   );
 }
-
 // ── Forgot Password ───────────────────────────────────────────────────────────
 function ForgotPasswordPage({ onBack }: { onBack: () => void }) {
   const [email, setEmail] = useState("");
@@ -545,21 +637,18 @@ function ForgotPasswordPage({ onBack }: { onBack: () => void }) {
   function submit() { if (!email.trim()) { setError("Please enter your email or phone"); return; } setSent(true); }
   if (sent) return (
     <div className="flex flex-col items-center justify-center min-h-screen px-8 text-center">
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      <div
         className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mb-6"
       >
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 300 }}>
+        <div>
           <Check size={36} className="text-primary" />
-        </motion.div>
-      </motion.div>
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.5 }}>
+        </div>
+      </div>
+      <div>
         <h1 className="text-2xl font-bold text-foreground mb-2">Check your inbox</h1>
         <p className="text-muted-foreground mb-6">We sent a password reset link to<br /><span className="font-semibold text-foreground">{email}</span></p>
         <button onClick={onBack} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity">Back to Sign In</button>
-      </motion.div>
+      </div>
     </div>
   );
   return (
@@ -625,14 +714,14 @@ function ClientHome({ gender, setGender, onCategory, onSearch, onProvider, onOff
 
 function ProviderCard({ provider: p, onClick, index = 0 }: { provider: Provider; onClick: () => void; index?: number }) {
   return (
-    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.07, duration: 0.4 }} onClick={onClick} className="flex gap-3 bg-card border border-border rounded-2xl p-3 cursor-pointer hover:border-primary/40 transition-colors active:scale-[0.98]">
+    <div onClick={onClick} className="flex gap-3 bg-card border border-border rounded-2xl p-3 cursor-pointer hover:border-primary/40 transition-colors active:scale-[0.98]">
       <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-muted"><img src={p.image} alt={p.name} className="w-full h-full object-cover" /></div>
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2"><h3 className="font-bold text-foreground text-sm">{p.name}</h3><span className="text-xs font-bold text-primary whitespace-nowrap">{p.price}</span></div>
         <p className="text-xs text-muted-foreground mt-0.5 capitalize">{p.categoryKey}</p>
         <div className="flex items-center gap-3 mt-1.5"><span className="flex items-center gap-1 text-xs font-medium"><Star size={11} className="fill-[#F8CD42] text-[#F8CD42]" />{p.rating}</span><span className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={11} />{p.location}</span><span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock size={11} />{p.distanceKm} km</span></div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -661,9 +750,25 @@ function CategoryResults({ category, gender, onProvider }: { category: { key: st
 }
 
 // ── Search Results (gender filter + price sort toggle) ────────────────────────
+// ── Task 10: Skeleton loading card ───────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className="flex gap-3 bg-card border border-border rounded-2xl p-3">
+      <div className="t10-skeleton w-16 h-16 rounded-xl flex-shrink-0" />
+      <div className="flex-1 flex flex-col gap-2 justify-center">
+        <div className="t10-skeleton h-3 rounded-full w-3/4" />
+        <div className="t10-skeleton h-2.5 rounded-full w-1/2" />
+        <div className="t10-skeleton h-2 rounded-full w-2/3" />
+      </div>
+    </div>
+  );
+}
+
 function SearchResults({ onProvider, favorites }: { onProvider: (p: Provider) => void; favorites: string[] }) {
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("rating");
+  useEffect(() => { const t = setTimeout(() => setLoading(false), 900); return () => clearTimeout(t); }, []);
   const [priceDir, setPriceDir] = useState<"asc" | "desc">("asc");
   const [region, setRegion] = useState("All");
   const [catFilter, setCatFilter] = useState("All");
@@ -686,8 +791,9 @@ function SearchResults({ onProvider, favorites }: { onProvider: (p: Provider) =>
   });
   return (
     <div className="flex flex-col px-5 pt-2 pb-4 gap-4">
-      <div><h1 className="text-2xl font-bold text-foreground">Search</h1><p className="text-muted-foreground text-sm mt-0.5">{filtered.length} providers</p></div>
+      <div><h1 className="text-2xl font-bold text-foreground">Search</h1><p className="text-muted-foreground text-sm mt-0.5">{loading ? "Loading…" : `${filtered.length} providers`}</p></div>
       <div className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3 shadow-sm"><Search size={17} className="text-muted-foreground flex-shrink-0" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name, category, area…" className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none" /></div>
+      {loading && <div className="flex flex-col gap-3">{[1,2,3].map(i => <SkeletonCard key={i} />)}</div>}
       <div className="flex items-center gap-2 flex-wrap">
         <button onClick={() => setSort("rating")} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${sort === "rating" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border"}`}>Top Rated</button>
         <button onClick={() => { if (sort === "price") setPriceDir((d) => d === "asc" ? "desc" : "asc"); else setSort("price"); }} className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1 ${sort === "price" ? "bg-primary text-primary-foreground border-primary" : "bg-card text-foreground border-border"}`}>
@@ -715,7 +821,7 @@ function SearchResults({ onProvider, favorites }: { onProvider: (p: Provider) =>
           </div>
         ))}
         {filtered.length === 0 && <p className="text-center text-muted-foreground text-sm py-12">No providers match your search.</p>}
-      </div>
+      </div></> }
     </div>
   );
 }
@@ -790,26 +896,26 @@ function BookingFlow({ provider, accountType, days, selectedDate, setSelectedDat
   const [sent, setSent] = useState(false);
   const dayData = days[selectedDate];
   const takenTimes = accountType === "personal" ? bookedSlots.filter((s) => s.dateIdx === dayData?.dayIdx).map((s) => s.time) : [];
-  if (sent) return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] px-8 text-center">
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center mb-6"
-      >
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring", stiffness: 300 }}>
+  if (sent) {
+    const confColors = ["#6B21A8","#F8CD42","#9D4EDD","#C4A8E0","#1B1324","#EDE5F5"];
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[70vh] px-8 text-center" style={{ position:"relative", overflow:"hidden" }}>
+        {/* Anim 6 — confetti */}
+        {Array.from({ length: 14 }).map((_, i) => (
+          <div key={i} style={{ position:"absolute", top:-12, left:`${8+(i*7)%84}%`, width:7+(i%4), height:7+(i%4), borderRadius:i%3===0?"50%":"2px", background:confColors[i%confColors.length], animation:`t10-confetti ${1.4+(i%5)*.22}s ease-in ${i*.055}s forwards`, pointerEvents:"none" }} />
+        ))}
+        {/* Anim 5 — success circle */}
+        <div style={{ width:80, height:80, borderRadius:"50%", background:"rgba(107,33,168,.1)", border:"2px solid #6B21A8", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:20, animation:"t10-success .5s cubic-bezier(.16,1,.3,1) forwards" }}>
           <Check size={36} className="text-primary" />
-        </motion.div>
-      </motion.div>
-      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.5 }}>
-        <h1 className="text-2xl font-bold text-foreground mb-2">Request Sent!</h1>
-        <p className="text-muted-foreground mb-1">Your booking request has been sent to</p>
-        <p className="text-foreground font-bold mb-1">{provider.name}</p>
-        <p className="text-primary font-bold mb-2">{dayData?.label}, {dayData?.date} {MONTH_NAMES[dayData?.month ?? NOW.getMonth()].slice(0,3)} {dayData?.year} · {selectedTime}</p>
-        <div className="flex items-center gap-2 bg-[#F8CD42]/15 border border-[#F8CD42]/30 rounded-xl px-3 py-2 mb-8"><AlertCircle size={14} className="text-amber-600" /><span className="text-xs text-amber-700 font-medium">Awaiting provider confirmation</span></div>
-        <button onClick={onConfirm} className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-bold hover:opacity-90 transition-opacity">View My Bookings</button>
-      </motion.div>
+        </div>
+        <div style={{ animation:"t10-fade-in .5s ease .25s both", opacity:0 }}>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Request Sent!</h1>
+          <p className="text-muted-foreground mb-1">Your booking request has been sent to</p>
+          <p className="text-foreground font-bold mb-1">{provider.name}</p>
+          <p className="text-primary font-bold mb-2">{dayData?.label}, {dayData?.date} {MONTH_NAMES[dayData?.month ?? NOW.getMonth()].slice(0,3)} {dayData?.year} · {selectedTime}</p>
+          <div className="flex items-center gap-2 bg-[#F8CD42]/15 border border-[#F8CD42]/30 rounded-xl px-3 py-2 mb-8"><AlertCircle size={14} className="text-amber-600" /><span className="text-xs text-amber-700 font-medium">Awaiting provider confirmation</span></div>
+          <button onClick={onConfirm} className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-bold hover:opacity-90 transition-opacity">View My Bookings</button>
+      </div>
     </div>
   );
   return (
@@ -860,21 +966,21 @@ function MyAppointments({ bookingRequests, onSearch, onProvider, onCancelRequest
       <h1 className="text-2xl font-bold text-foreground">My Bookings</h1>
       <div className="flex gap-1 bg-muted rounded-2xl p-1">
         {(["upcoming", "past"] as const).map((t) => (
-          <motion.button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all ${tab === t ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`} whileTap={{ scale: 0.96 }}>{t}</motion.button>
+          <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 rounded-xl text-xs font-bold capitalize transition-all ${tab === t ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground"}`}>{t}</button>
         ))}
       </div>
       <div className="flex flex-col gap-3">
         {tab === "upcoming" && upcoming.map((req, i) => (
-          <motion.div key={req.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="bg-card border border-border rounded-2xl p-4">
+          <div key={req.id} className="bg-card border border-border rounded-2xl p-4">
             <div className="flex items-start justify-between mb-2"><div><button onClick={() => { const p = ALL_PROVIDERS.find((x) => x.id === req.providerId); if (p) onProvider(p); }} className="font-bold text-foreground text-sm text-left hover:text-primary transition-colors">{req.providerName}</button><p className="text-xs text-muted-foreground mt-0.5">{req.service}</p></div><span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColor(req.status)}`}>{req.status}</span></div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3"><span className="flex items-center gap-1"><CalendarDays size={11} />{req.date}</span><span className="flex items-center gap-1"><Clock size={11} />{req.time}</span><span className="ml-auto font-bold text-foreground">{req.price}</span></div>
             <div className="flex gap-2">
               <button onClick={() => openMap(req.providerLocation)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-primary transition-colors"><Navigation size={12} />Open in Maps</button>
               {req.status === "pending" && <button onClick={() => onCancelRequest(req.id)} className="flex-1 py-2 rounded-xl border border-destructive text-destructive text-xs font-semibold hover:bg-destructive/5 transition-colors">Cancel</button>}
             </div>
-          </motion.div>
+          </div>
         ))}
-        {tab === "upcoming" && upcoming.length === 0 && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-muted-foreground text-sm py-8">No upcoming bookings</motion.p>}
+        {tab === "upcoming" && upcoming.length === 0 && <p className="text-center text-muted-foreground text-sm py-8">No upcoming bookings</p>}
         {tab === "upcoming" && (
           <button onClick={onSearch} className="flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-border text-muted-foreground text-sm hover:border-primary/40 hover:text-primary transition-colors">
             <Plus size={16} />Book new appointment
@@ -882,21 +988,21 @@ function MyAppointments({ bookingRequests, onSearch, onProvider, onCancelRequest
         )}
 
         {tab === "past" && staticCompleted.map((item, i) => (
-          <motion.div key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="bg-card border border-border rounded-2xl p-4">
+          <div key={i} className="bg-card border border-border rounded-2xl p-4">
             <div className="flex items-start justify-between mb-2"><div><button onClick={() => { const p = ALL_PROVIDERS.find((x) => x.id === item.providerId); if (p) onProvider(p); }} className="font-bold text-foreground text-sm text-left hover:text-primary transition-colors">{item.providerName}</button><p className="text-xs text-muted-foreground mt-0.5">{item.service}</p></div><span className="text-xs font-bold px-2.5 py-1 rounded-full bg-muted text-muted-foreground">completed</span></div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3"><span className="flex items-center gap-1"><CalendarDays size={11} />{item.date}</span><span className="flex items-center gap-1"><Clock size={11} />{item.time}</span><span className="ml-auto font-bold text-foreground">{item.price}</span></div>
             <div className="flex gap-2">
               <button onClick={() => openMap(item.location)} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-muted text-muted-foreground text-xs font-semibold hover:text-primary transition-colors"><Navigation size={12} />Open in Maps</button>
               <button onClick={() => setReviewTarget({ id: item.providerId, name: item.providerName })} className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border border-primary/30 text-primary text-xs font-bold hover:bg-primary/5 transition-colors"><Star size={11} />Review</button>
             </div>
-          </motion.div>
+          </div>
         ))}
         {/* Cancelled/rejected also appear under Past */}
         {tab === "past" && cancelledReqs.map((req, i) => (
-          <motion.div key={req.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (staticCompleted.length + i) * 0.05 }} className="bg-card border border-border rounded-2xl p-4 opacity-60">
+          <div key={req.id} className="bg-card border border-border rounded-2xl p-4 opacity-60">
             <div className="flex items-start justify-between mb-2"><div><h3 className="font-bold text-foreground text-sm">{req.providerName}</h3><p className="text-xs text-muted-foreground mt-0.5">{req.service}</p></div><span className={`text-xs font-bold px-2.5 py-1 rounded-full ${statusColor(req.status)}`}>{req.status}</span></div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground"><span className="flex items-center gap-1"><CalendarDays size={11} />{req.date}</span><span className="flex items-center gap-1"><Clock size={11} />{req.time}</span><span className="ml-auto font-bold text-foreground">{req.price}</span></div>
-          </motion.div>
+          </div>
         ))}
         {tab === "past" && staticCompleted.length === 0 && cancelledReqs.length === 0 && <p className="text-center text-muted-foreground text-sm py-8">No past bookings</p>}
       </div>
@@ -948,31 +1054,76 @@ function BusinessBookings({ bookingRequests, onAccept, onReject }: { bookingRequ
 }
 
 // ── Provider Dashboard (clickable chart, dynamic revenue) ─────────────────────
-function ProviderDashboard({ accountName, onCalendar, onRevenueDay }: { accountName: string; onCalendar: () => void; onRevenueDay: (day: string) => void }) {
+// ── REVENUE_DATA for Task 8 charts ───────────────────────────────────────────
+const REVENUE_DATA = [
+  { day: "Sun", revenue: 140, appts: 3 }, { day: "Mon", revenue: 85, appts: 2 },
+  { day: "Tue", revenue: 120, appts: 4 }, { day: "Wed", revenue: 95, appts: 3 },
+  { day: "Thu", revenue: 160, appts: 5 }, { day: "Fri", revenue: 210, appts: 6 },
+  { day: "Sat", revenue: 185, appts: 5 },
+];
+const DONUT_DATA = [
+  { name: "Haircut", value: 48, color: "#6B21A8" },
+  { name: "Beard",   value: 26, color: "#9D4EDD" },
+  { name: "Package", value: 16, color: "#F8CD42" },
+  { name: "Other",   value: 10, color: "#C4A8E0" },
+];
+
+function ProviderDashboard({ accountName, onCalendar, onRevenue }: { accountName: string; onCalendar: () => void; onRevenue: () => void }) {
   const firstName = accountName.split(" ")[0];
-  const todayRevStr = `${TODAY_REVENUE} KWD`;
   return (
-    <div className="flex flex-col px-5 pt-2 pb-4 gap-6">
+    <div className="flex flex-col px-5 pt-2 pb-4 gap-5">
       <div><p className="text-sm text-muted-foreground">{getTimeGreeting()},</p><h1 className="text-2xl font-bold text-foreground">{firstName} 👋</h1></div>
+
+      {/* Task 8 — Small Multiples: KPI tiles */}
       <div className="grid grid-cols-3 gap-2.5">
-        {[{ value: "4", sub: "appts today", icon: CalendarDays }, { value: todayRevStr, sub: "today", icon: DollarSign }, { value: "31", sub: "clients/week", icon: Users }].map(({ value, sub, icon: Icon }, i) => <div key={i} className="bg-card border border-border rounded-2xl p-3 flex flex-col gap-1.5"><Icon size={16} className="text-primary" /><p className="text-sm font-bold text-foreground leading-tight">{value}</p><p className="text-[10px] text-muted-foreground leading-tight">{sub}</p></div>)}
+        {[{ value: "4", sub: "appts today", icon: CalendarDays }, { value: "140 KWD", sub: "today", icon: DollarSign }, { value: "31", sub: "clients/wk", icon: Users }].map(({ value, sub, icon: Icon }, i) => (
+          <div key={i} className="bg-card border border-border rounded-2xl p-3 flex flex-col gap-1.5">
+            <Icon size={16} className="text-primary" />
+            <p className="text-sm font-bold text-foreground leading-tight">{value}</p>
+            <p className="text-[10px] text-muted-foreground leading-tight">{sub}</p>
+          </div>
+        ))}
       </div>
+
+      {/* Task 8 — Area Chart with Datatips */}
       <div className="bg-card border border-border rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-1"><h2 className="text-sm font-bold text-foreground">Revenue — This Week</h2><div className="flex items-center gap-2"><span className="text-xs text-primary font-bold flex items-center gap-0.5"><TrendingUp size={12} />+18%</span><button onClick={() => onRevenueDay(REVENUE_DATA.find(d => d.dayIdx === TODAY_IDX)?.day ?? "Fri")} className="text-xs text-muted-foreground font-semibold hover:text-primary transition-colors">See all</button></div></div>
-        <p className="text-xs text-muted-foreground mb-3">Tap a day dot for details</p>
-        <ResponsiveContainer width="100%" height={110}>
-          <AreaChart data={REVENUE_DATA} margin={{ top: 4, right: 0, left: -30, bottom: 0 }}
-            onClick={(data) => { if (data?.activePayload?.[0]) { const d = data.activePayload[0].payload; onRevenueDay(d.day); } }}>
-            <defs><linearGradient id="dashRevGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6B21A8" stopOpacity={0.25} /><stop offset="100%" stopColor="#6B21A8" stopOpacity={0} /></linearGradient></defs>
-            <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#7C5C9E" }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 9, fill: "#7C5C9E" }} axisLine={false} tickLine={false} />
-            <Tooltip contentStyle={{ background: "var(--card)", border: "1px solid var(--border)", borderRadius: "10px", fontSize: "11px", padding: "6px 10px" }} labelStyle={{ color: "var(--foreground)", fontWeight: 700, fontSize: "11px" }} formatter={(value: number) => [`${value} KWD`, ""]} cursor={{ stroke: "#6B21A8", strokeWidth: 1, strokeDasharray: "4 4" }} />
-            <Area type="monotone" dataKey="revenue" stroke="#F8CD42" strokeWidth={2.5} fill="url(#dashRevGrad)" dot={{ r: 3, fill: "#F8CD42", stroke: "#6B21A8", strokeWidth: 1.5, cursor: "pointer" }} activeDot={{ r: 6, fill: "#F8CD42", stroke: "#6B21A8", strokeWidth: 2, cursor: "pointer" }} />
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <p className="text-xs font-bold text-foreground">Revenue — This Week</p>
+            <p className="text-[10px] text-muted-foreground">Tap a dot for details (Datatip)</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-green-600 flex items-center gap-0.5">▲ +18%</span>
+            <button onClick={onRevenue} className="text-[10px] text-primary font-bold">See all</button>
+          </div>
+        </div>
+        <ResponsiveContainer width="100%" height={100}>
+          <AreaChart data={REVENUE_DATA} margin={{ top: 4, right: 4, left: -24, bottom: 0 }}>
+            <defs>
+              <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#6B21A8" stopOpacity={0.18} />
+                <stop offset="95%" stopColor="#6B21A8" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="day" tick={{ fontSize: 9, fill: "#7C5C9E" }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 8, fill: "#7C5C9E" }} axisLine={false} tickLine={false} />
+            <Tooltip
+              contentStyle={{ background: "#1B1324", border: "none", borderRadius: "10px", fontSize: "11px", padding: "6px 10px" }}
+              labelStyle={{ color: "#fff", fontWeight: 700 }}
+              itemStyle={{ color: "#F8CD42" }}
+              formatter={(v: number, _: string, props: { payload: { appts: number } }) => [`${v} KWD · ${props.payload.appts} appts`]}
+            />
+            <Area type="monotone" dataKey="revenue" stroke="#F8CD42" strokeWidth={2.5} fill="url(#revGrad)" dot={{ fill: "#F8CD42", r: 3, strokeWidth: 0 }} activeDot={{ r: 5, fill: "#6B21A8" }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Today's schedule */}
       <div>
-        <div className="flex items-center justify-between mb-3"><h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{"Today's Schedule"}</h2><button onClick={onCalendar} className="text-xs text-primary font-bold">Full calendar</button></div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{"Today's Schedule"}</h2>
+          <button onClick={onCalendar} className="text-xs text-primary font-bold">Full calendar</button>
+        </div>
         <div className="flex flex-col gap-2">{SCHEDULE_BY_DAY[1].map((a) => <div key={a.id} className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3"><div className="flex flex-col items-end min-w-[52px]"><span className="text-xs font-bold text-primary">{a.time}:00</span><span className="text-[10px] text-muted-foreground">{a.duration}</span></div><div className="w-px h-8 bg-border flex-shrink-0" /><div className="flex-1 min-w-0"><p className="text-sm font-semibold text-foreground">{a.client}</p><p className="text-xs text-muted-foreground">{a.service}</p></div></div>)}</div>
       </div>
     </div>
@@ -1201,13 +1352,13 @@ function ProviderCalendar({ accountType, bookingRequests, onProvider }: { accoun
       {selectedAppt && !showRescheduleSheet && (
         <div className="absolute inset-0 z-50 flex flex-col justify-end">
           <div className="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onClick={() => setSelectedAppt(null)} />
-          <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ type: "spring", stiffness: 300, damping: 30 }} className="relative bg-card rounded-t-3xl border-t border-border px-5 pt-5 pb-10 z-10 shadow-2xl">
+          <div className="relative bg-card rounded-t-3xl border-t border-border px-5 pt-5 pb-10 z-10 shadow-2xl">
             <div className="flex items-center justify-between mb-5"><h2 className="text-lg font-bold text-foreground">{selectedAppt.type === "break" ? "Break Block" : "Appointment Details"}</h2><button onClick={() => setSelectedAppt(null)} className="p-1.5 rounded-full bg-muted text-muted-foreground"><X size={16} /></button></div>
             {selectedAppt.type === "break" ? <div className="flex flex-col gap-3 mb-5"><Row label="Time" value={selectedAppt.time} /><Row label="Duration" value={selectedAppt.duration} /></div> : <div className="flex flex-col gap-3 mb-5">{accountType === "personal" ? (<div className="flex justify-between text-sm"><span className="text-muted-foreground">Provider</span><button onClick={() => { const p = ALL_PROVIDERS.find((x) => x.name === selectedAppt.client); if (p) { onProvider(p); setSelectedAppt(null); } }} className="font-semibold text-primary hover:underline">{selectedAppt.client}</button></div>) : <Row label="Client" value={selectedAppt.client} />}<Row label="Service" value={selectedAppt.service} /><Row label="Date" value={selectedAppt.date} /><Row label="Time" value={apptTimes[selectedAppt.id] ?? selectedAppt.time} /><Row label="Duration" value={selectedAppt.duration} /><div className="flex justify-between border-t border-border pt-3 mt-1"><span className="font-bold text-sm">Total</span><span className="font-bold text-primary text-sm">{selectedAppt.price}</span></div></div>}
             {accountType === "personal" && selectedAppt.type === "appointment" && <div className="flex flex-col gap-2"><button onClick={() => setShowRescheduleSheet(true)} className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 transition-opacity">Reschedule</button><button onClick={() => { setCancelledIds((p) => [...p, selectedAppt.id]); setSelectedAppt(null); }} className="w-full py-3.5 rounded-2xl border border-destructive text-destructive font-bold text-sm hover:bg-destructive/5 transition-colors">Cancel Booking</button></div>}
             {accountType === "business" && selectedAppt.type === "appointment" && <div className="flex flex-col gap-2"><button onClick={() => { if (!completedIds.includes(selectedAppt.id)) setCompletedIds((p) => [...p, selectedAppt.id]); setSelectedAppt(null); }} disabled={completedIds.includes(selectedAppt.id)} className="w-full py-3.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:opacity-90 disabled:opacity-50">{completedIds.includes(selectedAppt.id) ? "✓ Marked Complete" : "Mark Complete"}</button><button onClick={() => { setCancelledIds((p) => [...p, selectedAppt.id]); setSelectedAppt(null); }} className="w-full py-3.5 rounded-2xl border border-destructive text-destructive font-bold text-sm hover:bg-destructive/5">Cancel Appointment</button></div>}
             {selectedAppt.type === "break" && <button onClick={() => { setBreaks((p) => { const c = { ...p }; c[selectedDay] = (c[selectedDay] ?? []).filter((b) => b.id !== selectedAppt.id); return c; }); setSelectedAppt(null); }} className="w-full py-3.5 rounded-2xl border border-destructive text-destructive font-bold text-sm hover:bg-destructive/5">Remove Break</button>}
-          </motion.div>
+          </div>
         </div>
       )}
       {showRescheduleSheet && selectedAppt && <RescheduleSheet appt={selectedAppt} onConfirm={(t) => { setApptTimes((p) => ({ ...p, [selectedAppt.id]: t })); setShowRescheduleSheet(false); setSelectedAppt(null); }} onClose={() => setShowRescheduleSheet(false)} />}
@@ -1411,7 +1562,7 @@ function SettingsScreen({ accounts, activeAccount, accountType, onSwitchAccount,
         <div>
           <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Business</p>
           <div className="bg-card border border-border rounded-2xl overflow-hidden divide-y divide-border">
-            {[{ label: "Business Profile", icon: Edit3, action: onBusinessProfile }, { label: "Services", icon: Sparkles, action: onServiceSetup }, { label: "Revenue & Analytics", icon: BarChart2, action: onRevenue }].map(({ label, icon: Icon, action }) => <button key={label} onClick={action} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors"><Icon size={17} className="text-muted-foreground flex-shrink-0" /><span className="text-sm font-semibold text-foreground flex-1 text-left">{label}</span><ChevronRight size={15} className="text-muted-foreground" /></button>)}
+            {[{ label: "Business Profile", icon: Edit3, action: onBusinessProfile }, { label: "Services", icon: Sparkles, action: onServiceSetup }].map(({ label, icon: Icon, action }) => <button key={label} onClick={action} className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50 transition-colors"><Icon size={17} className="text-muted-foreground flex-shrink-0" /><span className="text-sm font-semibold text-foreground flex-1 text-left">{label}</span><ChevronRight size={15} className="text-muted-foreground" /></button>)}
           </div>
         </div>
       )}
@@ -1476,47 +1627,109 @@ function ChangePasswordSheet({ onClose }: { onClose: () => void }) {
 }
 
 // ── Revenue Detail Page ───────────────────────────────────────────────────────
-function RevenueDetailPage({ selectedDay, onBack, onDaySelect }: { selectedDay: string; onBack: () => void; onDaySelect: (d: string) => void }) {
+const curMonth = NOW.getMonth();
+const curYear = NOW.getFullYear();
+
+// ── Privacy / About / Gift / Invite / Favorites ───────────────────────────────// ── Task 8: Revenue Detail Page (Bar Chart + Donut Chart + Heat Map) ─────────
+function RevenueDetailPage({ onBack, selectedDay, onDaySelect }: { onBack: () => void; selectedDay: string; onDaySelect: (d: string) => void }) {
   const [viewAll, setViewAll] = useState(false);
-  const dayData = REVENUE_DATA.find((d) => d.day === selectedDay) ?? REVENUE_DATA[4];
-  const clients = SCHEDULE_BY_DAY[dayData.dayIdx] ?? [];
-  const displayDays = viewAll ? REVENUE_DATA : [dayData];
+  const [activeHeat, setActiveHeat] = useState<number | null>(null);
+  const dayData = REVENUE_DATA.find(d => d.day === selectedDay) ?? REVENUE_DATA[4];
+  const clients = SCHEDULE_BY_DAY[dayData ? REVENUE_DATA.indexOf(dayData) % 7 : 4] ?? [];
+  const heatIntensity = [0,0,2,3,4,4,3,2,3,4,4,3,2,1,3,4,4,3,2,1,4,4,3,2,1,3,4,4,2,0];
+  const heatColors = ["#F3EDF8","#C4A8E0","#9D4EDD","#7C22AA","#4A0080"];
   return (
     <div className="flex flex-col px-5 pt-2 pb-4 gap-5">
       <div className="flex items-center justify-between">
         <div><h1 className="text-2xl font-bold text-foreground">Revenue</h1><p className="text-sm text-muted-foreground mt-0.5">{viewAll ? "This Week" : selectedDay}</p></div>
-        <button onClick={() => setViewAll((v) => !v)} className="text-xs text-primary font-bold">{viewAll ? "Day View" : "See All"}</button>
+        <button onClick={() => setViewAll(v => !v)} className="text-xs text-primary font-bold">{viewAll ? "Day View" : "See All"}</button>
       </div>
       {!viewAll ? (
         <>
           <div className="bg-primary rounded-3xl p-6">
             <p className="text-primary-foreground/60 text-xs uppercase tracking-wider mb-1">Revenue — {selectedDay}</p>
-            <p className="text-4xl font-bold text-white">{dayData.revenue} <span className="text-xl font-normal text-white/60">KWD</span></p>
-            <p className="text-white/50 text-xs mt-2">{clients.length} appointments</p>
+            <p className="text-4xl font-bold text-white">{dayData?.revenue ?? 0} <span className="text-xl font-normal text-white/60">KWD</span></p>
+            <p className="text-white/50 text-xs mt-2">{dayData?.appts ?? 0} appointments</p>
           </div>
-          <div>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Clients — {selectedDay}</p>
-            {clients.length === 0 ? <div className="bg-card border border-border rounded-2xl py-8 text-center"><p className="text-muted-foreground text-sm">No appointments this day</p></div> : (
-              <div className="flex flex-col gap-2">{clients.map((a) => <div key={a.id} className="bg-card border border-border rounded-2xl px-4 py-3 flex items-center justify-between"><div><p className="text-sm font-semibold text-foreground">{a.client}</p><p className="text-xs text-muted-foreground">{a.service} · {a.time}:00 · {a.duration}</p></div><span className="text-sm font-bold text-primary">{a.price}</span></div>)}</div>
-            )}
-          </div>
+          <div className="flex flex-col gap-2">{clients.slice(0,3).map(a => <div key={a.id} className="bg-card border border-border rounded-2xl px-4 py-3 flex items-center justify-between"><div><p className="text-sm font-semibold text-foreground">{a.client}</p><p className="text-xs text-muted-foreground">{a.service}</p></div><span className="text-sm font-bold text-primary">{a.price}</span></div>)}</div>
         </>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-card border border-border rounded-2xl p-4"><p className="text-xs text-muted-foreground mb-1">Total Week</p><p className="text-2xl font-bold text-primary">{REVENUE_DATA.reduce((s, d) => s + d.revenue, 0)} <span className="text-sm font-normal text-muted-foreground">KWD</span></p></div>
-            <div className="bg-card border border-border rounded-2xl p-4"><p className="text-xs text-muted-foreground mb-1">Best Day</p><p className="text-2xl font-bold text-foreground">{REVENUE_DATA.reduce((best, d) => d.revenue > best.revenue ? d : best).day}</p></div>
+            <div className="bg-card border border-border rounded-2xl p-4"><p className="text-xs text-muted-foreground mb-1">Total Week</p><p className="text-2xl font-bold text-primary">{REVENUE_DATA.reduce((s,d)=>s+d.revenue,0)} <span className="text-sm text-muted-foreground">KWD</span></p></div>
+            <div className="bg-card border border-border rounded-2xl p-4"><p className="text-xs text-muted-foreground mb-1">Best Day</p><p className="text-2xl font-bold text-foreground">{REVENUE_DATA.reduce((b,d)=>d.revenue>b.revenue?d:b).day}</p></div>
           </div>
-          <div className="flex flex-col gap-2">
-            {REVENUE_DATA.map((d) => (
-              <button key={d.day} onClick={() => { onDaySelect(d.day); setViewAll(false); }} className="bg-card border border-border rounded-2xl px-4 py-3 flex items-center justify-between hover:border-primary/40 transition-colors">
-                <div><p className="text-sm font-semibold text-foreground">{d.day}</p><p className="text-xs text-muted-foreground">{(SCHEDULE_BY_DAY[d.dayIdx] ?? []).length} clients</p></div>
-                <div className="flex items-center gap-2">
-                  <div className="h-2 rounded-full bg-primary/20 overflow-hidden w-20"><div className="h-full bg-primary rounded-full" style={{ width: `${(d.revenue / 220) * 100}%` }} /></div>
-                  <span className="text-sm font-bold text-primary w-16 text-right">{d.revenue} KWD</span>
+          {/* Bar chart — Task 8 */}
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Daily Revenue</p>
+            <ResponsiveContainer width="100%" height={90}>
+              <BarChart data={REVENUE_DATA} barSize={20} margin={{ top: 0, right: 4, left: -24, bottom: 0 }}>
+                <XAxis dataKey="day" tick={{ fontSize: 9, fill: "#7C5C9E" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 8, fill: "#7C5C9E" }} axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ background: "#1B1324", border: "none", borderRadius: "10px", fontSize: "11px", padding: "5px 10px" }} labelStyle={{ color: "#fff" }} itemStyle={{ color: "#F8CD42" }} formatter={(v: number) => [`${v} KWD`]} />
+                <Bar dataKey="revenue" radius={[4,4,0,0]}>
+                  {REVENUE_DATA.map((d, i) => <Cell key={i} fill={d.day === selectedDay ? "#F8CD42" : "#6B21A8"} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {/* Donut chart — Task 8 */}
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Bookings by Category</p>
+            <div className="flex items-center gap-4">
+              <ResponsiveContainer width={90} height={90}>
+                <PieChart>
+                  <Pie data={DONUT_DATA} cx="50%" cy="50%" innerRadius={24} outerRadius={42} dataKey="value" strokeWidth={0}>
+                    {DONUT_DATA.map((d, i) => <Cell key={i} fill={d.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: "#1B1324", border: "none", borderRadius: "10px", fontSize: "11px", padding: "5px 10px" }} formatter={(v: number) => [`${v}%`]} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="flex flex-col gap-1.5">{DONUT_DATA.map(d => <div key={d.name} className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-sm flex-shrink-0" style={{ background: d.color }} /><span className="text-xs text-foreground">{d.name}</span><span className="text-xs text-muted-foreground ml-auto">{d.value}%</span></div>)}</div>
+            </div>
+          </div>
+          {/* Heat map — Task 8 */}
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Booking Activity — This Month</p>
+            <div className="flex gap-0.5 mb-1">{["S","M","T","W","T","F","S"].map((d,i) => <div key={i} className="flex-1 text-center text-[9px] text-muted-foreground font-bold">{d}</div>)}</div>
+            <div className="grid gap-1" style={{ gridTemplateColumns:"repeat(7,1fr)" }}>
+              {[0,1,2].map(i => <div key={"e"+i} />)}
+              {heatIntensity.map((v,i) => (
+                <div key={i} className="aspect-square rounded cursor-pointer relative"
+                  style={{ background: v===0 ? "#F3EDF8" : heatColors[v-1] }}
+                  onClick={() => setActiveHeat(activeHeat===i ? null : i)}>
+                  {activeHeat===i && (
+                    <div
+                      className="absolute -top-7 left-1/2 -translate-x-1/2 bg-foreground text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10 whitespace-nowrap">
+                      Day {i+1}: {v===0?"0":(v*2+1)} bookings
+                    </div>
+                  )}
                 </div>
-              </button>
-            ))}
+              ))}
+            </div>
+            <div className="flex items-center gap-1 mt-2">
+              <span className="text-[9px] text-muted-foreground">Low</span>
+              {heatColors.map((c,i) => <div key={i} className="w-3 h-3 rounded-sm" style={{ background:c }} />)}
+              <span className="text-[9px] text-muted-foreground">High</span>
+            </div>
+          </div>
+          {/* Rating histogram — Task 8 */}
+          <div className="bg-card border border-border rounded-2xl p-4">
+            <div className="flex gap-4 items-start">
+              <div className="text-center flex-shrink-0"><div className="text-3xl font-bold text-foreground leading-none">4.9</div><div className="flex mt-1 justify-center">{[1,2,3,4,5].map(s=><Star key={s} size={10} className="fill-[#F8CD42] text-[#F8CD42]" />)}</div><div className="text-xs text-muted-foreground mt-1">428 reviews</div></div>
+              <div className="flex-1 flex flex-col gap-1">
+                {[{s:5,pct:72},{s:4,pct:18},{s:3,pct:6},{s:2,pct:3},{s:1,pct:1}].map(({s,pct}) => (
+                  <div key={s} className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground w-3 text-right">{s}</span>
+                    <Star size={9} className="fill-[#F8CD42] text-[#F8CD42] flex-shrink-0" />
+                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                      <div className="h-full bg-[#F8CD42] rounded-full" style={{ width:`${pct}%`, animation:"t10-bar-fill .7s cubic-bezier(.4,0,.2,1) forwards", "--bar-w":`${pct}%` } as React.CSSProperties} />
+                    </div>
+                    <span className="text-[10px] text-muted-foreground w-6 text-right">{pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </>
       )}
@@ -1524,10 +1737,148 @@ function RevenueDetailPage({ selectedDay, onBack, onDaySelect }: { selectedDay: 
   );
 }
 
-const curMonth = NOW.getMonth();
-const curYear = NOW.getFullYear();
+// ── Task 9: Payment Card Screen (full validated form) ─────────────────────────
+function PaymentCardScreen({ amount, recipient, onBack, onSuccess }: { amount: number; recipient: string; onBack: () => void; onSuccess: () => void }) {
+  const [groups, setGroups] = useState(["","","",""]);
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [saveCard, setSaveCard] = useState(true);
+  const [errors, setErrors] = useState<Record<string,string>>({});
+  const [processing, setProcessing] = useState(false);
+  const [done, setDone] = useState(false);
+  const refs = [useRef<HTMLInputElement>(null),useRef<HTMLInputElement>(null),useRef<HTMLInputElement>(null),useRef<HTMLInputElement>(null)];
 
-// ── Privacy / About / Gift / Invite / Favorites ───────────────────────────────
+  function fmtExp(v: string) { const d=v.replace(/\D/g,"").slice(0,4); return d.length>=3?d.slice(0,2)+"/"+d.slice(2):d; }
+  function validateExp(v: string) {
+    const p=v.split("/"); if(p.length!==2||p[0].length!==2||p[1].length!==2) return "Invalid format";
+    const m=parseInt(p[0]),y=parseInt("20"+p[1]),now=new Date();
+    if(m<1||m>12) return "Invalid month";
+    if(y<now.getFullYear()||(y===now.getFullYear()&&m<now.getMonth()+1)) return "Card expired";
+    return "";
+  }
+
+  function submit() {
+    const e: Record<string,string> = {};
+    if(groups.join("").length<16) e.card="Enter a valid 16-digit card number";
+    const expErr=validateExp(expiry); if(expErr) e.expiry=expErr;
+    if(cvv.length<3) e.cvv="3 digits required";
+    if(!cardName.trim()) e.name="Name is required";
+    setErrors(e);
+    if(Object.keys(e).length) return;
+    setProcessing(true);
+    setTimeout(()=>{ setProcessing(false); setDone(true); }, 1600);
+  }
+
+  if(done) return (
+    <div className="flex flex-col items-center justify-center min-h-screen px-8 text-center">
+      <div
+        className="w-24 h-24 rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center mb-6">
+        <div>
+          <Check size={40} className="text-green-600" />
+        </div>
+      </div>
+      <div>
+        <h1 className="text-2xl font-bold text-foreground mb-2">Payment Successful!</h1>
+        <p className="text-muted-foreground mb-1">Gift card of <span className="font-bold text-primary">{amount} KWD</span> sent to</p>
+        <p className="font-bold text-foreground mb-8">{recipient}</p>
+        <button onClick={onSuccess} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold hover:opacity-90 transition-opacity">Back to Gift Cards</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col px-5 pt-2 pb-8 gap-4">
+      <div><h1 className="text-2xl font-bold text-foreground">Payment</h1><p className="text-sm text-muted-foreground mt-0.5">Secure checkout</p></div>
+      {/* Card visual */}
+      <div className="relative h-44 rounded-3xl overflow-hidden" style={{ background:"linear-gradient(135deg,#6B21A8,#9D4EDD)" }}>
+        <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-white/5 -translate-y-10 translate-x-10" />
+        <div className="absolute inset-0 p-5 flex flex-col justify-between">
+          <div className="flex justify-between items-start"><div className="text-white/40 text-xs font-bold tracking-widest">CREDIT</div></div>
+          <div><div className="font-mono text-white text-sm tracking-[0.18em] mb-3">{groups.map(g=>g.padEnd(4,"•").slice(0,4)).join("  ")}</div>
+            <div className="flex justify-between">
+              <div><p className="text-white/40 text-[8px] uppercase tracking-widest mb-0.5">Card Holder</p><p className="text-white text-xs font-bold">{cardName||"YOUR NAME"}</p></div>
+              <div><p className="text-white/40 text-[8px] uppercase tracking-widest mb-0.5">Expires</p><p className="text-white text-xs font-bold">{expiry||"MM/YY"}</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Order summary */}
+      <div className="bg-primary/5 border border-primary/15 rounded-2xl p-4">
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Order Summary</p>
+        <div className="flex justify-between text-sm mb-1"><span className="text-muted-foreground">Gift Card — {amount} KWD</span><span>{amount}.000 KWD</span></div>
+        <div className="flex justify-between text-sm mb-2"><span className="text-muted-foreground">Service Fee</span><span>0.500 KWD</span></div>
+        <div className="flex justify-between font-bold"><span>Total</span><span className="text-primary">{(amount+0.5).toFixed(3)} KWD</span></div>
+      </div>
+      {/* Card number — 4 groups, auto-advance */}
+      <div>
+        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Card Number <span className="text-[9px] font-normal normal-case tracking-normal">— Structured format, auto-advances</span></label>
+        <div className="flex gap-2">
+          {groups.map((g,i) => (
+            <input key={i} ref={refs[i]} value={g} type="tel" inputMode="numeric" maxLength={4}
+              placeholder="0000"
+              onChange={e => {
+                const v=e.target.value.replace(/\D/g,"").slice(0,4);
+                setGroups(p=>{const n=[...p];n[i]=v;return n;});
+                if(v.length===4&&i<3) refs[i+1].current?.focus();
+                if(errors.card) setErrors(p=>({...p,card:""}));
+              }}
+              className={`flex-1 text-center font-mono font-bold text-sm py-3 rounded-xl bg-muted border focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors ${errors.card?"border-destructive":g.length===4?"border-green-500":"border-border"}`}
+            />
+          ))}
+        </div>
+        {errors.card && <p className="text-xs text-destructive mt-1 flex items-center gap-1"><AlertCircle size={11} />{errors.card}</p>}
+      </div>
+      {/* Expiry + CVV */}
+      <div className="flex gap-3">
+        <div className="flex-1">
+          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Expiry (MM/YY)</label>
+          <input value={expiry} type="tel" inputMode="numeric" maxLength={5} placeholder="MM/YY"
+            onChange={e => { setExpiry(fmtExp(e.target.value)); if(errors.expiry) setErrors(p=>({...p,expiry:""})); }}
+            onBlur={() => { const err=validateExp(expiry); if(err) setErrors(p=>({...p,expiry:err})); }}
+            className={`w-full px-4 py-3.5 rounded-xl bg-muted border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors ${errors.expiry?"border-destructive":expiry.length===5&&!validateExp(expiry)?"border-green-500":"border-border"}`}
+          />
+          {errors.expiry && <p className="text-xs text-destructive mt-1 flex items-center gap-1"><AlertCircle size={11} />{errors.expiry}</p>}
+        </div>
+        <div className="w-28">
+          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">CVV</label>
+          <input value={cvv} type="password" inputMode="numeric" maxLength={3} placeholder="•••"
+            onChange={e => { setCvv(e.target.value.replace(/\D/g,"").slice(0,3)); if(errors.cvv) setErrors(p=>({...p,cvv:""})); }}
+            onBlur={() => { if(cvv.length<3) setErrors(p=>({...p,cvv:"3 digits required"})); }}
+            className={`w-full px-3 py-3.5 rounded-xl bg-muted border text-sm text-center font-bold focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors ${errors.cvv?"border-destructive":cvv.length===3?"border-green-500":"border-border"}`}
+          />
+          {errors.cvv && <p className="text-xs text-destructive mt-1 flex items-center gap-1"><AlertCircle size={11} />{errors.cvv}</p>}
+        </div>
+      </div>
+      {/* Name */}
+      <div>
+        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Name on Card</label>
+        <input value={cardName} type="text" placeholder="REEM AL-RASHIDI"
+          onChange={e => { setCardName(e.target.value.toUpperCase()); if(errors.name) setErrors(p=>({...p,name:""})); }}
+          onBlur={() => { if(!cardName.trim()) setErrors(p=>({...p,name:"Name is required"})); }}
+          className={`w-full px-4 py-3.5 rounded-xl bg-muted border text-sm font-bold tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors ${errors.name?"border-destructive":cardName.length>2?"border-green-500":"border-border"}`}
+        />
+        {errors.name && <p className="text-xs text-destructive mt-1 flex items-center gap-1"><AlertCircle size={11} />{errors.name}</p>}
+      </div>
+      <button onClick={() => setSaveCard(v=>!v)} className="flex items-center gap-3">
+        <div className={`w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border-2 transition-colors ${saveCard?"bg-primary border-primary":"border-border"}`}>
+          {saveCard && <Check size={11} className="text-white" />}
+        </div>
+        <span className="text-sm text-muted-foreground">Save card for future bookings</span>
+      </button>
+      <button onClick={submit} disabled={processing}
+        className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold text-base hover:opacity-90 transition-opacity disabled:opacity-70 flex items-center justify-center gap-2">
+        {processing ? (
+          <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />Processing…</>
+        ) : (
+          <><Shield size={14} /> Pay {(amount+0.5).toFixed(3)} KWD</>
+        )}
+      </button>
+      <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1"><Shield size={10} />256-bit SSL encryption</p>
+    </div>
+  );
+}
+
 function PrivacyPage() {
   const sections = [{ title:"Data We Collect", body:"We collect information you provide when creating an account (name, email, phone) and booking data. We also collect device information and usage data to improve the app." }, { title:"How We Use Your Data", body:"Your data is used to process bookings, send reminders, personalize recommendations, and improve our services. We never sell your personal data to third parties." }, { title:"Data Sharing", body:"We share only the information necessary with service providers you book with. We may share anonymized data for analytics." }, { title:"Your Rights", body:"You have the right to access, correct, or delete your personal data at any time." }, { title:"Data Security", body:"We use industry-standard encryption (TLS/SSL) for data in transit and at rest." }];
   return (
@@ -1541,37 +1892,38 @@ function AboutUsPage() {
   );
 }
 
-function GiftCardsPage() {
-  const amounts = [5,10,20,50]; const [selected,setSelected]=useState(20); const [recipient,setRecipient]=useState(""); const [message,setMessage]=useState(""); const [sent,setSent]=useState(false);
+function GiftCardsPage({ onPay }: { onPay: (amount: number, recipient: string) => void }) {
+  const amounts = [5,10,20,50]; const [selected,setSelected]=useState(20); const [recipient,setRecipient]=useState(""); const [message,setMessage]=useState(""); const [sent,setSent]=useState(false); const [recipientErr,setRecipientErr]=useState("");
   if (sent) return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] px-8 text-center">
-      <motion.div
-        initial={{ scale: 0, rotate: -20 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 240, damping: 18 }}
+      <div
         className="w-24 h-24 rounded-full bg-[#F8CD42]/20 border-2 border-[#F8CD42] flex items-center justify-center mb-6"
       >
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+        <div
         >
           <Gift size={38} className="text-[#F8CD42]" />
-        </motion.div>
-      </motion.div>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.5 }}>
+        </div>
+      </div>
+      <div>
         <h1 className="text-2xl font-bold text-foreground mb-2">Gift Card Sent!</h1>
         <p className="text-muted-foreground mb-1">Your {selected} KWD gift card was sent to</p>
         <p className="text-primary font-bold mb-8">{recipient}</p>
         <button onClick={() => { setSent(false); setRecipient(""); setMessage(""); }} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold hover:opacity-90">Send Another</button>
-      </motion.div>
+      </div>
     </div>
   );
   return(
     <div className="flex flex-col px-5 pt-2 pb-4 gap-6"><div><h1 className="text-2xl font-bold text-foreground">Gift Cards</h1><p className="text-sm text-muted-foreground mt-0.5">Share the gift of wellness</p></div><div className="relative h-36 rounded-3xl overflow-hidden bg-gradient-to-br from-primary to-[#9D4EDD]"><div className="absolute inset-0 flex flex-col justify-between p-5"><div className="flex items-center gap-2"><Sparkles size={20} className="text-[#F8CD42]"/><span className="text-white font-bold" style={{fontFamily:"Inter,sans-serif",fontSize:"1.2rem"}}>Ehjezly</span></div><div><p className="text-white/60 text-xs uppercase tracking-widest">Gift Card</p><p className="text-white text-3xl font-bold">{selected} KWD</p></div></div></div>
     <div><p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Select Amount</p><div className="grid grid-cols-4 gap-2">{amounts.map((a)=><button key={a} onClick={()=>setSelected(a)} className={`py-3 rounded-2xl text-sm font-bold border transition-all ${selected===a?"bg-primary text-primary-foreground border-primary":"bg-card text-foreground border-border hover:border-primary/40"}`}>{a} KWD</button>)}</div></div>
     <div className="flex flex-col gap-4"><div><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">{"Recipient's Email or Phone"}</label><input value={recipient} onChange={(e)=>setRecipient(e.target.value)} placeholder="noura@gmail.com" type="text" inputMode="email" className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"/></div><div><label className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Message (optional)</label><textarea value={message} onChange={(e)=>setMessage(e.target.value)} placeholder="Treat yourself!" rows={3} className="w-full px-4 py-3 rounded-xl bg-muted border border-border text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm resize-none"/></div></div>
-    <button onClick={()=>recipient&&setSent(true)} disabled={!recipient} className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-bold text-base hover:opacity-90 disabled:opacity-40">Send Gift Card — {selected} KWD</button></div>
+    {recipientErr && <p className="text-xs text-destructive mb-2 flex items-center gap-1"><AlertCircle size={11} />{recipientErr}</p>}
+    <button onClick={() => {
+      if (!recipient.trim()) { setRecipientErr("Please enter recipient's email or phone"); return; }
+      if (!recipient.includes("@") && recipient.replace(/\D/g,"").length < 8) { setRecipientErr("Enter a valid email or Kuwait phone number"); return; }
+      setRecipientErr(""); onPay(selected, recipient);
+    }} className="w-full py-4 rounded-2xl bg-accent text-accent-foreground font-bold text-base hover:opacity-90">
+      Pay {selected} KWD →
+    </button></div>
   );
 }
 
@@ -1597,23 +1949,43 @@ function FavoritesPage({ favorites, onProvider, onToggleFavorite }: { favorites:
 
 // ── Bottom Nav ────────────────────────────────────────────────────────────────
 function BottomNav({ activeTab, onTab }: { activeTab: "home"|"bookings"|"calendar"|"profile"; onTab: (tab: "home"|"bookings"|"calendar"|"profile") => void }) {
+  const [bouncing, setBouncing] = useState<string | null>(null);
   const tabs = [{ key:"home" as const, label:"Home", icon:Home }, { key:"bookings" as const, label:"Bookings", icon:BookOpen }, { key:"calendar" as const, label:"Calendar", icon:CalendarDays }, { key:"profile" as const, label:"Profile", icon:User }];
+  function handleTab(key: "home"|"bookings"|"calendar"|"profile") {
+    setBouncing(key);
+    onTab(key);
+    setTimeout(() => setBouncing(null), 380);
+  }
   return(
     <div className="bg-card/95 backdrop-blur-md border-t border-border px-2 pb-8 pt-2 flex items-center justify-around shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
-      {tabs.map(({ key, label, icon: Icon }) => { const active = activeTab === key; return<button key={key} onClick={()=>onTab(key)} className="flex flex-col items-center gap-0.5 min-w-[60px] py-1 group"><div className={`p-2 rounded-xl transition-all ${active?"bg-primary/10":"group-hover:bg-muted"}`}><Icon size={20} className={active?"text-primary":"text-muted-foreground"} strokeWidth={active?2.5:1.8}/></div><span className={`text-[10px] font-bold ${active?"text-primary":"text-muted-foreground"}`}>{label}</span>{active&&<div className="w-1 h-1 rounded-full bg-accent"/>}</button>; })}
+      {tabs.map(({ key, label, icon: Icon }) => {
+        const active = activeTab === key;
+        const isBouncing = bouncing === key;
+        return (
+          <button key={key} onClick={() => handleTab(key)} className="flex flex-col items-center gap-0.5 min-w-[60px] py-1 group">
+            <div className={`p-2 rounded-xl transition-colors ${active ? "bg-primary/10" : "group-hover:bg-muted"}`}
+              style={isBouncing ? { animation: "t10-nav-bounce .36s cubic-bezier(.16,1,.3,1)" } : {}}>
+              <Icon size={20} className={active ? "text-primary" : "text-muted-foreground"} strokeWidth={active ? 2.5 : 1.8} />
+            </div>
+            <span className={`text-[10px] font-bold ${active ? "text-primary" : "text-muted-foreground"}`}>{label}</span>
+            <div style={{ height: 5, display: "flex", alignItems: "center" }}>
+              <div style={{ width: 4, height: 4, borderRadius: "50%", background: active ? "#F8CD42" : "transparent", transition: "background .2s" }} />
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }
-
 // ── Account Switcher Sheet ────────────────────────────────────────────────────
 function AccountSwitcherSheet({ accounts, onSwitch, onClose, onAddAccount }: { accounts: Account[]; onSwitch: (id: string) => void; onClose: () => void; onAddAccount: () => void }) {
   return(
-    <div className="absolute inset-0 z-50 flex flex-col justify-end"><motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onClick={onClose}/>
-      <motion.div initial={{ y: 120 }} animate={{ y: 0 }} transition={{ type: "spring", stiffness: 280, damping: 30 }} className="relative bg-card rounded-t-3xl border-t border-border px-5 pt-5 pb-10 z-10 shadow-2xl">
+    <div className="absolute inset-0 z-50 flex flex-col justify-end"><div className="absolute inset-0 bg-foreground/25 backdrop-blur-sm" onClick={onClose}/>
+      <div className="relative bg-card rounded-t-3xl border-t border-border px-5 pt-5 pb-10 z-10 shadow-2xl">
         <div className="flex items-center justify-between mb-5"><h2 className="text-lg font-bold text-foreground">Switch Account</h2><button onClick={onClose} className="p-1.5 rounded-full bg-muted text-muted-foreground"><X size={16}/></button></div>
         <div className="flex flex-col gap-2 mb-4">{accounts.map((acc)=><button key={acc.id} onClick={()=>!acc.active&&onSwitch(acc.id)} className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all ${acc.active?"border-primary bg-primary/5 cursor-default":"border-border hover:border-primary/40"}`}><div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm flex-shrink-0">{acc.avatar}</div><div className="flex-1 text-left"><p className="text-sm font-bold text-foreground">{acc.name}</p><p className="text-xs text-muted-foreground capitalize">{acc.type} account</p></div>{acc.active&&<Check size={16} className="text-primary flex-shrink-0"/>}</button>)}</div>
         <button onClick={onAddAccount} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border-2 border-dashed border-border text-muted-foreground text-sm hover:border-primary/40 hover:text-primary transition-colors"><Plus size={16}/>Add another account</button>
-      </motion.div>
+      </div>
     </div>
   );
 }
